@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\VSProjects\Tag\x64\Debug\TAG.exe</FullPath>
+      <FullPath>C:\VisualStudio Projects\Tag\x64\Debug\TAG.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

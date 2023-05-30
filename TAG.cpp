@@ -1,5 +1,4 @@
 //См. примечания и замечания в конце
-
 #include <SFML/Graphics.hpp>
 #include "Board.h"
 #include "Constants.h"
@@ -36,7 +35,8 @@ int main()
 
 	Board player_board;
 	bool is_moving = false;
-
+	bool shuffle = false;
+	int shuffle_steps = 0;
 	while (window.isOpen())
 	{
 
@@ -51,8 +51,11 @@ int main()
 				break;
 			case sf::Event::MouseButtonPressed:
 				if (event.key.code == sf::Mouse::Left && !is_moving) {
+					if (sf::Mouse::getPosition(window).x < 50) {
+						shuffle = true;
+					}
 					sf::Vector2i click_pos = sf::Mouse::getPosition(window);
-					is_moving = player_board.find_click_location(window, click_pos);
+					is_moving = player_board.ask_for_moving(window, click_pos, true);
 				}
 				break;
 			default:
@@ -60,12 +63,19 @@ int main()
 			}
 		}
 		do {
-			window.clear();
-			window.draw(backgrond);
-			window.draw(title);
-			player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
-			window.display();
-		} while (is_moving);
+			do {
+				window.clear();
+				window.draw(backgrond);
+				window.draw(title);
+				player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
+				window.display();
+			} while (is_moving);
+			if (shuffle) {
+				player_board.shaffle_board(window);
+				is_moving = true;
+			}
+		} while (shuffle && ++shuffle_steps < 50);
+		shuffle_steps = 0;
 	}
 
 	return 0;

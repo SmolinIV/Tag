@@ -9,3 +9,4 @@ C:\VSProjects\Tag\x64\Debug\bz2d.dll
 C:\VSProjects\Tag\x64\Debug\libpng16d.dll
 C:\VSProjects\Tag\x64\Debug\brotlidec.dll
 C:\VSProjects\Tag\x64\Debug\brotlicommon.dll
+C:\VisualStudio Projects\Tag\x64\Debug\TAG.exe
