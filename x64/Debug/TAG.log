@@ -1,0 +1,20 @@
+﻿  TAG.cpp
+C:\VSProjects\TAG\Cube.h(132,2): warning C4102: defualt: неиспользованная метка
+C:\VSProjects\TAG\Board.h(66,8): warning C4244: инициализация: преобразование "float" в "int", возможна потеря данных
+C:\VSProjects\TAG\Board.h(67,8): warning C4244: инициализация: преобразование "float" в "int", возможна потеря данных
+C:\VSProjects\TAG\Board.h(69,29): warning C4244: /=: преобразование "float" в "int", возможна потеря данных
+C:\VSProjects\TAG\Board.h(70,29): warning C4244: /=: преобразование "float" в "int", возможна потеря данных
+C:\VSProjects\TAG\TAG.cpp(17,49): warning C4244: аргумент: преобразование "float" в "unsigned int", возможна потеря данных
+C:\VSProjects\TAG\TAG.cpp(17,40): warning C4244: аргумент: преобразование "float" в "unsigned int", возможна потеря данных
+C:\VSProjects\TAG\TAG.cpp(66,73): warning C4244: аргумент: преобразование "T" в "float", возможна потеря данных
+          with
+          [
+              T=unsigned int
+          ]
+C:\VSProjects\TAG\TAG.cpp(66,49): warning C4244: аргумент: преобразование "T" в "float", возможна потеря данных
+          with
+          [
+              T=unsigned int
+          ]
+C:\VSProjects\TAG\TAG.cpp(82,28): warning C4244: аргумент: преобразование "int" в "float", возможна потеря данных
+  TAG.vcxproj -> C:\VSProjects\Tag\x64\Debug\TAG.exe

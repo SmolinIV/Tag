@@ -1,3 +1,5 @@
+//См. примечания и замечания в конце
+
 #include <SFML/Graphics.hpp>
 #include "Board.h"
 #include "Constants.h"
@@ -34,14 +36,9 @@ int main()
 
 	Board player_board;
 	bool is_moving = false;
-	sf::Clock clock;
-	float time;
+
 	while (window.isOpen())
 	{
-		// Задание скорости перемещения
-		time = clock.getElapsedTime().asMicroseconds();
-		time /= 6000;
-		clock.restart();
 
 		// Обработка действий
 		sf::Event event;	
@@ -55,19 +52,20 @@ int main()
 			case sf::Event::MouseButtonPressed:
 				if (event.key.code == sf::Mouse::Left && !is_moving) {
 					sf::Vector2i click_pos = sf::Mouse::getPosition(window);
-					is_moving = player_board.move_cube(window, click_pos);
+					is_moving = player_board.find_click_location(window, click_pos);
 				}
 				break;
 			default:
 				break;
 			}
 		}
-
-		window.clear();
-		window.draw(backgrond);
-		window.draw(title);
-		player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);
-		window.display();
+		do {
+			window.clear();
+			window.draw(backgrond);
+			window.draw(title);
+			player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
+			window.display();
+		} while (is_moving);
 	}
 
 	return 0;
@@ -85,3 +83,15 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 	mtext.setOutlineColor(border_color);
 	mtext.setPosition(xpos - (mtext.getGlobalBounds().width / 2.0f), ypos - mtext.getGlobalBounds().height / 2.0f);
 }
+
+
+//Примечания: конструкторы копирования не используются, т.к. достаточно тех, что будут созданы по умолчанию, т.к. нет динамического выделения памяти
+// 
+// Замечания.
+// 1. Не забудь преобразовать проверку подгрузки картинок
+// 
+// 
+// 
+// 
+// 
+//
