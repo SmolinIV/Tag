@@ -17,8 +17,9 @@ private:
 	bool b_already_drawn;
 	static const int b_board_capacity = 4;
 	std::array<std::array<Cube, b_board_capacity>, b_board_capacity> b_cubes{{{1, 2, 3, 4}, { 5, 6, 7, 8 }, { 9, 10, 11, 12 }, {13, 14, 15, 0}}};
-	short b_empty_cube_i = 3;
-	short b_empty_cube_j = 3;
+	struct cube_pos { 
+		int i, j; 
+	} b_empty_cube{3, 3}, b_last_swap_cube{3, 3};
 public:
 	Board();
 	float get_board_width() const { return b_width; }
@@ -27,6 +28,8 @@ public:
 	void shaffle_board(sf::RenderWindow& window);
 	bool ask_for_moving(sf::RenderWindow& window, sf::Vector2i click_pos, bool mouse_control = false);
 	void swap_cubes(int i1, int j1, int i2, int j2 );
+	~Board() {}
+
 };
 
 
@@ -64,7 +67,7 @@ void Board::draw(sf::RenderWindow& window, float xpos, float ypos, bool& need_mo
 }
 
 bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bool mouse_control) {
-	
+
 	int i, j;
 
 	if (mouse_control) {
@@ -87,6 +90,8 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 			b_cubes[i][j].change_pos(DIRECTION::DOWN);
 			b_cubes[i - 1][j].change_pos(DIRECTION::UP);
 			b_moving_cube = &b_cubes[i - 1][j];
+			b_empty_cube = { i,j };
+			b_last_swap_cube = { i - 1,j };
 			return true;
 		}
 	}
@@ -97,6 +102,8 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 			b_cubes[i][j].change_pos(DIRECTION::UP);
 			b_cubes[i + 1][j].change_pos(DIRECTION::DOWN);
 			b_moving_cube = &b_cubes[i + 1][j];
+			b_empty_cube = { i,j };
+			b_last_swap_cube = { i + 1,j };
 			return true;
 		}
 	}
@@ -107,6 +114,8 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 			b_cubes[i][j].change_pos(DIRECTION::RIGHT);
 			b_cubes[i][j - 1].change_pos(DIRECTION::LEFT);
 			b_moving_cube = &b_cubes[i][j - 1];
+			b_empty_cube = { i,j };
+			b_last_swap_cube = { i,j - 1 };
 			return true;
 		}
 	}
@@ -117,6 +126,8 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 			b_cubes[i][j].change_pos(DIRECTION::LEFT);
 			b_cubes[i][j + 1].change_pos(DIRECTION::RIGHT);
 			b_moving_cube = &b_cubes[i][j + 1];
+			b_empty_cube = { i,j };
+			b_last_swap_cube = { i,j + 1 };
 			return true;
 		}
 	}
@@ -134,28 +145,20 @@ void Board::swap_cubes(int i1, int j1, int i2, int j2) {
 
 void Board::shaffle_board(sf::RenderWindow& window) {
 
-	int	nexti = b_empty_cube_i,	 // —генерированные индексы €чейки дл€ swap'а с текущей
-		nextj = b_empty_cube_j,	 //
-		lasti = b_empty_cube_i,	 // »ндексы предыдущей €чейки (при успешном swap'е)
-		lastj = b_empty_cube_j,     //
-		unit = 0;		 // рандомна€ плюс или минус единица 
+	int next_i,
+		next_j,
+		unit;
 
 	while (true) {
+		next_i = b_empty_cube.i;
+		next_j = b_empty_cube.j;
 		unit = (rand() % 2) ? (1) : (-1);
-		unit = (rand() % 2) ? (1) : (-1);
-		(rand() % 2) ? (nexti = b_empty_cube_i + unit) : (nextj = b_empty_cube_j + unit);
+		(rand() % 2) ? (next_i = b_empty_cube.i + unit) : (next_j = b_empty_cube.j + unit);
 
-		if (!ask_for_moving(window, sf::Vector2i(nexti,nextj), false)) {
-			nexti = b_empty_cube_i;
-			nextj = b_empty_cube_j;
-		}
-		else {
-			break;
+		if (!(next_i == b_last_swap_cube.i && next_j == b_last_swap_cube.j)) {
+			if (ask_for_moving(window, sf::Vector2i(next_j, next_i))) {
+				break;
+			}
 		}
 	}
-
-	lasti = b_empty_cube_i;
-	lastj = b_empty_cube_j;
-	b_empty_cube_i = nexti;
-	b_empty_cube_j = nextj;
 }

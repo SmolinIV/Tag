@@ -7,8 +7,11 @@
 void init_text(sf::Text& text, float xpos, float ypos, sf::String str, int size_font = 60,
 	sf::Color menu_text_color = sf::Color::White, int bord = 0, sf::Color border_color = sf::Color::Black);
 
+void image_output(sf::RenderWindow& window, sf::RectangleShape& background);
+
 int main()
 {
+	srand(time(NULL));
 	// Задание размеров окна
 	float w_width = 1440,//sf::VideoMode::getDesktopMode().width/2,
 		w_height = 800;	 //sf::VideoMode::getDesktopMode().height/2;
@@ -23,7 +26,7 @@ int main()
 	//Задний фон игры
 	sf::RectangleShape backgrond(sf::Vector2f(w_width, w_height));
 	sf::Texture texture_background;
-	if (!texture_background.loadFromFile("png/bg1.png")) { return 1; }
+	if (!texture_background.loadFromFile("png/bg2.png")) { return 1; }
 	backgrond.setTexture(&texture_background);
 
 	//Шрифт для названия игры
@@ -76,6 +79,7 @@ int main()
 			}
 		} while (shuffle && ++shuffle_steps < 50);
 		shuffle_steps = 0;
+		shuffle = false;
 	}
 
 	return 0;
@@ -99,8 +103,9 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 // 
 // Замечания.
 // 1. Не забудь преобразовать проверку подгрузки картинок
-// 
-// 
+// 2. Тесты.
+// 3. Возможно стоит выделить прорисовку в отдельную функцию.
+//
 // 
 // 
 // 

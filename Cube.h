@@ -28,6 +28,8 @@ public:
 	void change_pos(DIRECTION dir);
 
 	void moving_cube(bool& need_move);
+
+	~Cube() {}
 };
 
 Cube::Cube() {
@@ -91,11 +93,11 @@ void Cube::change_pos(DIRECTION dir) {
 }
 
 void Cube::moving_cube(bool& need_move) {
-	static int koef_smoothness = 10;
+	
 	switch (c_dir) {
 	case DIRECTION::UP:
 		if (c_current_pos.y > c_new_pos.y) {
-			c_current_pos.y -= koef_smoothness;
+			c_current_pos.y -= KOEF_SMOOTHNESS;
 		}
 		else {
 			c_current_pos = c_new_pos;
@@ -104,7 +106,7 @@ void Cube::moving_cube(bool& need_move) {
 		break;
 	case DIRECTION::DOWN:
 		if (c_current_pos.y < c_new_pos.y) {
-			c_current_pos.y+= koef_smoothness;
+			c_current_pos.y+= KOEF_SMOOTHNESS;
 		}
 		else {
 			c_current_pos = c_new_pos;
@@ -113,7 +115,7 @@ void Cube::moving_cube(bool& need_move) {
 		break;
 	case DIRECTION::LEFT:
 		if (c_current_pos.x > c_new_pos.x) {
-			c_current_pos.x -= koef_smoothness;
+			c_current_pos.x -= KOEF_SMOOTHNESS;
 		}
 		else {
 			c_current_pos = c_new_pos;
@@ -122,7 +124,7 @@ void Cube::moving_cube(bool& need_move) {
 		break;
 	case DIRECTION::RIGHT:
 		if (c_current_pos.x < c_new_pos.x) {
-			c_current_pos.x += koef_smoothness;
+			c_current_pos.x += KOEF_SMOOTHNESS;
 		}
 		else {
 			c_current_pos = c_new_pos;
