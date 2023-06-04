@@ -60,8 +60,8 @@ Cube::Cube(int i) : Cube() {
 void Cube::draw(sf::RenderWindow& window) {
 	c_cube.setPosition(c_current_pos);
 
-	c_number.setPosition(sf::Vector2f(c_cube.getPosition().x + c_side / 2 - c_number.getGlobalBounds().width / 2,
-									  c_cube.getPosition().y + c_side / 2 - c_number.getGlobalBounds().height));
+	c_number.setPosition(sf::Vector2f(c_current_pos.x + c_side / 2 - c_number.getGlobalBounds().width / 2,
+									  c_current_pos.y + c_side / 2 - c_number.getGlobalBounds().height));
 
 	window.draw(c_cube);
 	window.draw(c_number);
