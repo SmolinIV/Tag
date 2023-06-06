@@ -11,6 +11,8 @@
 void image_output(sf::RenderWindow& window, sf::RectangleShape& background);
 
 void first_screen(sf::RenderWindow& window, sf::RectangleShape& background);
+void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board);
+void player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board);
 
 int main()
 {
@@ -27,68 +29,19 @@ int main()
 	//window.setMouseCursorVisible(false);
 
 	//Задний фон игры
-	sf::RectangleShape backgrond(sf::Vector2f(w_width, w_height));
+	sf::RectangleShape background(sf::Vector2f(w_width, w_height));
 	sf::Texture texture_background;
 	if (!texture_background.loadFromFile("png/bg2.png")) { return 1; }
-	backgrond.setTexture(&texture_background);
+	background.setTexture(&texture_background);
 
-	//Шрифт для названия игры
-	/*sf::Font font;
-	if (!font.loadFromFile("font/acsiomasupershockc.otf")) { return 2; }
-	sf::Text title;
-	title.setFont(font);
-	init_text(title, (w_width / 2), (w_height / 7), L"Пятнашки", 80, sf::Color(APRICOT), 3);*/
-
-	//Menu main_menu{ "Началь игру", "Настройки", "Выход" };
 
 	Board player_board;
 
-	first_screen(window, backgrond);
+	first_screen(window, background);
 
-	
-	bool is_moving = false;
-	bool shuffle = false;
-	int shuffle_steps = 0;
-	while (window.isOpen())
-	{
+	shuffle_board(window, background, player_board);
 
-		// Обработка действий
-		sf::Event event;	
-		while (window.pollEvent(event))
-		{
-			switch (event.type)
-			{
-			case sf::Event::Closed:
-				window.close();
-				break;
-			case sf::Event::MouseButtonPressed:
-				if (event.key.code == sf::Mouse::Left && !is_moving) {
-					if (sf::Mouse::getPosition(window).x < 50) {
-						shuffle = true;
-					}
-					sf::Vector2i click_pos = sf::Mouse::getPosition(window);
-					is_moving = player_board.ask_for_moving(window, click_pos, true);
-				}
-				break;
-			default:
-				break;
-			}
-		}
-		do {
-			do {
-				window.clear();
-				window.draw(backgrond);
-				player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
-				window.display();
-			} while (is_moving);
-			if (shuffle) {
-				player_board.shaffle_board(window);
-				is_moving = true;
-			}
-		} while (shuffle && ++shuffle_steps < 50);
-		shuffle_steps = 0;
-		shuffle = false;
-	}
+	player_gaming(window, background, player_board);
 
 	return 0;
 }
@@ -120,6 +73,7 @@ void first_screen(sf::RenderWindow& window, sf::RectangleShape& background) {
 
 	Menu main_menu{ window,{L"Начать игру", L"Настройки", L"Выход"} };
 
+	MENU_POINTS choice = MENU_POINTS::NONE;
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -128,6 +82,18 @@ void first_screen(sf::RenderWindow& window, sf::RectangleShape& background) {
 			case sf::Event::Closed:
 				window.close();
 				break;
+			case sf::Event::KeyPressed:
+				switch (event.key.code) {
+				case sf::Keyboard::Up:
+					main_menu.move_up();
+					break;
+				case sf::Keyboard::Down:
+					main_menu.move_down();
+					break;
+				case sf::Keyboard::Enter:
+					choice = main_menu.selected();
+				}
+
 			default:
 				break;
 			}
@@ -138,12 +104,90 @@ void first_screen(sf::RenderWindow& window, sf::RectangleShape& background) {
 		window.draw(title);
 		main_menu.draw(window);
 		window.display();
-
+		if (choice == MENU_POINTS::START) {
+			sf::Clock clock;
+			float time = 0;
+			clock.restart();
+			while (time < 250) {
+				time = clock.getElapsedTime().asMilliseconds();
+			}
+			break;
+		}
 	}
 
 }
 
+void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board) {
+	sf::Clock clock;
+	float time = 0;
+	clock.restart();
+	while (time < 550) {
+		time = clock.getElapsedTime().asMilliseconds();
+	}
 
+	bool is_moving = false;
+	int shuffle_steps = 0;
+	while (window.isOpen() && shuffle_steps < 50)
+	{
+		// Обработка действий
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			switch (event.type)
+			{
+			case sf::Event::Closed:
+				window.close();
+				break;
+			default:
+				break;
+			}
+		}
+		player_board.shaffle_board(window);
+		do {
+			window.clear();
+			window.draw(background);
+			player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
+			window.display();
+		} while (is_moving);
+		is_moving = true;
+		++shuffle_steps;
+	}
+}
+
+void player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board) {
+	bool is_moving = false;
+	while (window.isOpen())
+	{
+		// Обработка действий
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			switch (event.type)
+			{
+			case sf::Event::Closed:
+				window.close();
+				break;
+			case sf::Event::MouseButtonPressed:
+				if (event.key.code == sf::Mouse::Left && !is_moving) {
+					sf::Vector2i click_pos = sf::Mouse::getPosition(window);
+					is_moving = player_board.ask_for_moving(window, click_pos, true);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		do {
+			window.clear();
+			window.draw(background);
+			player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
+			window.display();
+		} while (is_moving);
+		if (player_board.sequence_restored()) {
+			break;
+		}
+	}
+}
 
 
 //Примечания: конструкторы копирования не используются, т.к. достаточно тех, что будут созданы по умолчанию, т.к. нет динамического выделения памяти

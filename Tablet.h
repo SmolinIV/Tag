@@ -18,7 +18,7 @@ public:
 
 	void draw(sf::RenderWindow& window);
 
-	void selected(sf::Color color);
+	void change_color(sf::Color color);
 
 	void pressed();
 
@@ -51,7 +51,7 @@ void Tablet::draw(sf::RenderWindow& window) {
 
 }
 
-void Tablet::selected(sf::Color color) {
+void Tablet::change_color(sf::Color color) {
 	t_tablet_text.setFillColor(color);
 }
 

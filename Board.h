@@ -29,6 +29,7 @@ public:
 	void shaffle_board(sf::RenderWindow& window);
 	bool ask_for_moving(sf::RenderWindow& window, sf::Vector2i click_pos, bool mouse_control = false);
 	void swap_cubes(int i1, int j1, int i2, int j2 );
+	bool sequence_restored();
 	~Board() {}
 
 };
@@ -164,4 +165,18 @@ void Board::shaffle_board(sf::RenderWindow& window) {
 			}
 		}
 	}
+}
+
+bool Board::sequence_restored() {
+	if (!(b_cubes[3][2].get_cube_value() == 15 && b_cubes[3][3].get_cube_value() == 0)) { return false; }
+
+	int cube_value = 1;
+	for (int i = 0; i < b_board_capacity; i++) {
+		for (int j = 0; j < b_board_capacity; j++) {
+			if (i == b_board_capacity - 1 && j == b_board_capacity - 1) { return true; }
+			if (!(b_cubes[i][j].get_cube_value() == cube_value)) { return false; }
+			++cube_value;
+		}
+	}
+
 }

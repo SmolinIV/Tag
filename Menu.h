@@ -25,7 +25,11 @@ public:
 
 	void menu_navigating();
 
-	void moving_up();
+	void move_up();
+
+	void move_down();
+
+	MENU_POINTS selected();
 
 
 	~Menu() {}
@@ -39,7 +43,7 @@ Menu::Menu(sf::RenderWindow& window, std::initializer_list <sf::String> list) {
 		std::shared_ptr<Tablet> t{std::make_shared<Tablet>( *(list.begin() + i), sf::Vector2f{m_pos.x, m_pos.y + m_step * i} ) };
 		m_menu.push_back(t);
 		if (i == selected_point) {
-			m_menu[i]->selected(sf::Color(ORANGE_RED));
+			m_menu[i]->change_color(sf::Color(LIGHT_BROWN));
 		}
 		t = nullptr;
 	}
@@ -52,6 +56,46 @@ void Menu::draw(sf::RenderWindow& window) {
 	}
 }
 
-void Menu::moving_up() {
+void Menu::move_up() {
+	m_menu[selected_point]->change_color(sf::Color(BEIGE));
+
+	if (selected_point == 0) {
+		selected_point = m_menu.size() - 1;
+	}
+	else
+	{
+		--selected_point;
+	}
 	
+	m_menu[selected_point]->change_color(sf::Color(LIGHT_BROWN));
+	
+}
+
+void Menu::move_down() {
+	m_menu[selected_point]->change_color(sf::Color(BEIGE));
+
+	if (selected_point == m_menu.size() - 1) {
+		selected_point = 0;
+	}
+	else
+	{
+		++selected_point;
+	}
+
+	m_menu[selected_point]->change_color(sf::Color(LIGHT_BROWN));
+
+}
+
+MENU_POINTS Menu::selected() {
+	switch (selected_point) {
+	case 0:
+		return MENU_POINTS::START;
+	case 1: 
+		return MENU_POINTS::OPTINS;
+	case 2: 
+		return MENU_POINTS::EXIT;
+	default:
+		return MENU_POINTS::NONE;
+	}
+
 }
