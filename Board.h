@@ -1,8 +1,10 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <system_error>
 #include <array>
 #include "Cube.h"
 #include "Constants.h"
+
 
 class Board
 {
@@ -22,7 +24,7 @@ private:
 		int i, j; 
 	} b_empty_cube{3, 3}, b_last_swap_cube{3, 3};
 public:
-	Board();
+	Board(std::error_code& ec);
 	float get_board_width() const { return b_width; }
 	float get_board_height() const { return b_height; }
 	void draw(sf::RenderWindow& window, float xpos, float ypos, bool &need_move);
@@ -35,12 +37,14 @@ public:
 };
 
 
-Board::Board() {
-	b_board.setSize(sf::Vector2f(b_width, b_height));
-	if (!b_texture.loadFromFile("png/deck.png")) { exit(0); };
-	b_board.setTexture(&b_texture);
-	b_board_pos = { 0,0 };
-	b_already_drawn = false;
+Board::Board(std::error_code& ec) {
+	do {
+		b_board.setSize(sf::Vector2f(b_width, b_height));
+		if (!b_texture.loadFromFile("png/deck.png")) { ec.default_error_condition(); break; };
+		b_board.setTexture(&b_texture);
+		b_board_pos = { 0,0 };
+		b_already_drawn = false;
+	} while (false);
 }
 
 void Board::draw(sf::RenderWindow& window, float xpos, float ypos, bool& need_move) {

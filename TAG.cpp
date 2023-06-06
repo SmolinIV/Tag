@@ -1,5 +1,6 @@
 //См. примечания и замечания в конце
 #include <SFML/Graphics.hpp>
+#include <system_error>
 #include "Board.h"
 #include "Constants.h"
 #include "Menu.h"
@@ -10,38 +11,42 @@
 
 void image_output(sf::RenderWindow& window, sf::RectangleShape& background);
 
-void first_screen(sf::RenderWindow& window, sf::RectangleShape& background);
+MENU_POINTS first_screen(sf::RenderWindow& window, sf::RectangleShape& background);
 void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board);
 void player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board);
 
 int main()
 {
-	srand(time(NULL));
-	// Задание размеров окна
-	float w_width = 1440,//sf::VideoMode::getDesktopMode().width/2,
-		w_height = 800;	 //sf::VideoMode::getDesktopMode().height/2;
+	std::error_code ec;
+	do {
+		srand(time(NULL));
+		// Задание размеров окна
+		float w_width = 1440,//sf::VideoMode::getDesktopMode().width/2,
+			w_height = 800;	 //sf::VideoMode::getDesktopMode().height/2;
 
-	sf::RenderWindow window(sf::VideoMode(w_width, w_height), L"Пятнашки", sf::Style::Default);
+		sf::RenderWindow window(sf::VideoMode(w_width, w_height), L"Пятнашки", sf::Style::Default);
 
-	window.setFramerateLimit(60);
-	window.setVerticalSyncEnabled(true);
+		window.setFramerateLimit(60);
+		window.setVerticalSyncEnabled(true);
 
-	//window.setMouseCursorVisible(false);
+		//window.setMouseCursorVisible(false);
+		//Задний фон игры
+		sf::RectangleShape background(sf::Vector2f(w_width, w_height));
+		sf::Texture texture_background;
+		if (!texture_background.loadFromFile("png/bg2.png")) { ec = std::error_condition(0, std::); }
+		background.setTexture(&texture_background);
 
-	//Задний фон игры
-	sf::RectangleShape background(sf::Vector2f(w_width, w_height));
-	sf::Texture texture_background;
-	if (!texture_background.loadFromFile("png/bg2.png")) { return 1; }
-	background.setTexture(&texture_background);
+		Board player_board( ec );
 
+		if (first_screen(window, background) == MENU_POINTS::EXIT) 
+		{ 
+			break;
+		}
 
-	Board player_board;
+		shuffle_board(window, background, player_board);
 
-	first_screen(window, background);
-
-	shuffle_board(window, background, player_board);
-
-	player_gaming(window, background, player_board);
+		player_gaming(window, background, player_board);
+	} while (false);
 
 	return 0;
 }
@@ -57,7 +62,7 @@ int main()
 	mtext.setPosition(xpos - (mtext.getGlobalBounds().width / 2.0f), ypos - mtext.getGlobalBounds().height / 2.0f);
 }*/
 
-void first_screen(sf::RenderWindow& window, sf::RectangleShape& background) {
+MENU_POINTS first_screen(sf::RenderWindow& window, sf::RectangleShape& background) {
 
 	//Шрифт для названия игры
 	sf::Text title;
@@ -98,23 +103,24 @@ void first_screen(sf::RenderWindow& window, sf::RectangleShape& background) {
 				break;
 			}
 		}
-
 		window.clear();
 		window.draw(background);
 		window.draw(title);
 		main_menu.draw(window);
 		window.display();
-		if (choice == MENU_POINTS::START) {
-			sf::Clock clock;
-			float time = 0;
-			clock.restart();
-			while (time < 250) {
-				time = clock.getElapsedTime().asMilliseconds();
+		if (choice != MENU_POINTS::NONE) {
+			if (choice == MENU_POINTS::START) {
+				sf::Clock clock;
+				float time = 0;
+				clock.restart();
+				while (time < 250) {
+					time = clock.getElapsedTime().asMilliseconds();
+				}
+				return choice;
 			}
-			break;
+			return choice;
 		}
 	}
-
 }
 
 void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board) {
@@ -196,7 +202,8 @@ void player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Boa
 // 1. Не забудь преобразовать проверку подгрузки картинок
 // 2. Тесты.
 // 3. Возможно стоит выделить прорисовку в отдельную функцию.
-//
+// 4. Убрать std::array из board, всё равное возможности не используются, только загружает код.
+// 5. Перегрузить оператор сравнения для Cube.
 // 
 // 
 // 
