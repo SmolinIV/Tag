@@ -43,9 +43,9 @@ Cube::Cube() {
 	c_number.setString("");
 	c_number.setFont(c_font);
 	c_number.setCharacterSize(70);
-	c_number.setFillColor(sf::Color(BEIGE));
+	c_number.setFillColor(sf::Color(RGB_BEIGE));
 	c_number.setOutlineThickness(2);
-	c_number.setOutlineColor(sf::Color(DARK_BROWN));
+	c_number.setOutlineColor(sf::Color(RGB_DARK_BROWN));
 	c_dir = DIRECTION::NON_DIR;
 }
 

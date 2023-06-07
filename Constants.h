@@ -1,9 +1,9 @@
 #pragma once
 
-#define BEIGE 245,245,220
-#define DARK_BROWN 53,23,12
-#define APRICOT 204, 120, 52
-#define LIGHT_BROWN 222, 150, 1
+#define RGB_BEIGE 245,245,220
+#define RGB_DARK_BROWN 53,23,12
+#define RGB_APRICOT 204, 120, 52
+#define RGB_LIGHT_BROWN 222, 150, 1
 
 const int KOEF_SMOOTHNESS = 20; // Для эффекта отскока нужно число, которму не кратнен размер двигаемого объекта
 
@@ -26,3 +26,18 @@ enum class MENU_POINTS
 	VS_PC = 1,
 	NONE = -1
 };
+
+enum class GAMING_RESULT
+{
+	PLAYER_WIN,
+	PLAYER_LOSE,
+	PC_WIN,
+	GAME_DRAW,
+};
+
+
+//Задержка времени
+//sf::Clock clock;
+//float time = 0;
+//clock.restart();
+//while (time < 100) time = clock.getElapsedTime().asMilliseconds();

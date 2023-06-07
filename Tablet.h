@@ -36,9 +36,9 @@ Tablet::Tablet(sf::String text, sf::Vector2f pos) {
 		t_tablet_text.setString(text);
 		t_tablet_text.setFont(t_font);
 		t_tablet_text.setCharacterSize(t_text_size);
-		t_tablet_text.setFillColor(sf::Color(BEIGE));
+		t_tablet_text.setFillColor(sf::Color(RGB_BEIGE));
 		t_tablet_text.setOutlineThickness(2);
-		t_tablet_text.setOutlineColor(sf::Color(DARK_BROWN));
+		t_tablet_text.setOutlineColor(sf::Color(RGB_DARK_BROWN));
 	} while (false);
 }
 
