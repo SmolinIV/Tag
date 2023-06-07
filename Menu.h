@@ -13,7 +13,7 @@ private:
 	std::vector<std::shared_ptr<Tablet>> m_menu;
 	sf::Vector2f m_pos;
 
-	float m_step = 80;
+	float m_step = 100;
 	int selected_point = 0;
 
 

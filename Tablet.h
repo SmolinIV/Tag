@@ -6,7 +6,7 @@ class Tablet {
 
 private:
 	sf::RectangleShape t_tablet;
-	sf::Vector2f t_tablet_size = { 400,60 };
+	sf::Vector2f t_tablet_size = { 400,70 };
 	sf::Vector2f t_tablet_pos;
 	sf::Texture t_tablet_texture;
 	sf::Text t_tablet_text;
@@ -27,7 +27,7 @@ public:
 Tablet::Tablet(sf::String text, sf::Vector2f pos) {
 	do {
 		t_tablet.setSize(t_tablet_size);
-		if (!t_tablet_texture.loadFromFile("png/tablet3.png")) { exit(1); }
+		if (!t_tablet_texture.loadFromFile("png/tablet7.png")) { exit(1); }
 		t_tablet.setTexture(&t_tablet_texture);
 		t_tablet_pos.x = pos.x - t_tablet_size.x / 2;
 		t_tablet_pos.y = pos.y - t_tablet_size.y / 2;
