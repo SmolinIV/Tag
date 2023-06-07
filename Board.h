@@ -17,7 +17,6 @@ private:
 	sf::Texture b_texture;
 	sf::Vector2f b_board_pos;
 	Cube* b_moving_cube;	
-	bool b_already_drawn;
 	static const int b_board_capacity = 4;
 	std::array<std::array<Cube, b_board_capacity>, b_board_capacity> b_cubes{{{1, 2, 3, 4}, { 5, 6, 7, 8 }, { 9, 10, 11, 12 }, {13, 14, 15, 0}}};
 	struct cube_pos { 
@@ -27,11 +26,12 @@ public:
 	Board(std::error_code& ec);
 	float get_board_width() const { return b_width; }
 	float get_board_height() const { return b_height; }
-	void draw(sf::RenderWindow& window, float xpos, float ypos, bool &need_move);
+	void draw(sf::RenderWindow& window, bool &need_move);
 	void shaffle_board(sf::RenderWindow& window);
 	bool ask_for_moving(sf::RenderWindow& window, sf::Vector2i click_pos, bool mouse_control = false);
 	void swap_cubes(int i1, int j1, int i2, int j2 );
 	bool sequence_restored();
+	void setPosition(float xpos, float ypos);
 	~Board() {}
 
 };
@@ -43,35 +43,40 @@ Board::Board(std::error_code& ec) {
 		if (!b_texture.loadFromFile("png/deck.png")) { ec.default_error_condition(); break; };
 		b_board.setTexture(&b_texture);
 		b_board_pos = { 0,0 };
-		b_already_drawn = false;
 	} while (false);
 }
 
-void Board::draw(sf::RenderWindow& window, float xpos, float ypos, bool& need_move) {
-	if (!b_already_drawn) {
-		b_board_pos = { xpos - b_board.getGlobalBounds().width / 2.0f, ypos - b_board.getGlobalBounds().height / 2.0f };
-		b_board.setPosition(b_board_pos);
-		window.draw(b_board);
-		float cube_size = b_cubes[0][0].get_size();
-		for (int i = 0; i < b_board_capacity; i++) {
-			for (int j = 0; j < b_board_capacity; j++) {
-				b_cubes[i][j].set_position(b_board_pos.x + b_horiz_bord + cube_size * j, b_board_pos.y + b_vert_bord + cube_size * i);
-				b_cubes[i][j].draw(window);
-			}
-		}
-		b_already_drawn = true;
-	}
-	else {
-		window.draw(b_board);
-		if (need_move) {
-			b_moving_cube->moving_cube(need_move);
-		}
-		for (int i = 0; i < b_board_capacity; i++) {
-			for (int j = 0; j < b_board_capacity; j++) {
-				b_cubes[i][j].draw(window);
-			}
+void Board::setPosition(float xpos, float ypos) {
+	b_board_pos = { xpos - b_board.getGlobalBounds().width / 2.0f, ypos - b_board.getGlobalBounds().height / 2.0f };
+	b_board.setPosition(b_board_pos);
+	float cube_size = b_cubes[0][0].get_size();
+	for (int i = 0; i < b_board_capacity; i++) {
+		for (int j = 0; j < b_board_capacity; j++) {
+			b_cubes[i][j].set_position(b_board_pos.x + b_horiz_bord + cube_size * j, b_board_pos.y + b_vert_bord + cube_size * i);
 		}
 	}
+}
+
+void Board::draw(sf::RenderWindow& window, bool& need_move) {
+	window.draw(b_board);
+	float cube_size = b_cubes[0][0].get_size();
+	for (int i = 0; i < b_board_capacity; i++) {
+		for (int j = 0; j < b_board_capacity; j++) {
+			//b_cubes[i][j].set_position(b_board_pos.x + b_horiz_bord + cube_size * j, b_board_pos.y + b_vert_bord + cube_size * i);
+			b_cubes[i][j].draw(window);
+		}
+	}
+
+	window.draw(b_board);
+	if (need_move) {
+		b_moving_cube->moving_cube(need_move);
+	}
+	for (int i = 0; i < b_board_capacity; i++) {
+		for (int j = 0; j < b_board_capacity; j++) {
+			b_cubes[i][j].draw(window);
+		}
+	}
+
 }
 
 bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bool mouse_control) {

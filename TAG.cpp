@@ -19,6 +19,7 @@ GAMING_RESULT player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 
 int main()
 {
+	setlocale(LC_ALL, "RUS");
 	std::error_code syst_error;
 	do {
 		srand(time(NULL));
@@ -36,12 +37,11 @@ int main()
 		sf::RectangleShape background(sf::Vector2f(w_width, w_height));
 		sf::Texture texture_background;
 		if (!texture_background.loadFromFile("png/bg2.png")) { syst_error = std::make_error_code(std::errc::no_such_file_or_directory); break; }
+		background.setTexture(&texture_background);
 
 		Board player_board(syst_error);
-
+		player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
 		do {
-			background.setTexture(&texture_background);
-
 			if (work_with_main_menu(window, background, syst_error) == MENU_POINTS::EXIT || syst_error) { break; }
 
 			shuffle_board(window, background, player_board, syst_error);
@@ -49,15 +49,6 @@ int main()
 
 			player_gaming(window, background, player_board, syst_error);
 			if (syst_error) { break; }
-			sf::Image I_pg;
-			sf::Texture postgame_screen;
-			window.capture();
-			postgame_screen.create(w_width, w_height);
-			postgame_screen.update(window);
-			I_pg = postgame_screen.copyToImage();
-			postgame_screen.loadFromImage(I_pg);
-			background.setTexture(&postgame_screen);
-			work_with_main_menu(window, background, syst_error);
 		} while (true);
 		if (syst_error) { break; }
 	} while (false);
@@ -138,7 +129,7 @@ void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Boa
 		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Приготовьтесь!", 80);
 		bool is_moving = false;
 		int shuffle_steps = 0;
-		int number_of_swap = 10;
+		int number_of_swap = 60;
 		while (window.isOpen() && shuffle_steps < number_of_swap)
 		{
 			if (shuffle_steps >= number_of_swap / 2 && (number_of_swap - shuffle_steps) % 10 == 0) {
@@ -157,16 +148,18 @@ void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Boa
 					break;
 				}
 			}
-			player_board.shaffle_board(window);
 			do {
 				window.clear();
 				window.draw(background);
 				window.draw(title);
-				player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
+				player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
 				window.display();
 			} while (is_moving);
-			is_moving = true;
 			++shuffle_steps;
+			if (shuffle_steps < number_of_swap) {
+				player_board.shaffle_board(window);
+			}
+			is_moving = true;
 		}
 	} while (false);
 }
@@ -207,7 +200,7 @@ GAMING_RESULT player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 				window.clear();
 				window.draw(background);
 				window.draw(title);
-				player_board.draw(window, window.getSize().x / 2, window.getSize().y / 2, is_moving);	//is_moving обнуляется внутри функции
+				player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
 				window.display();
 			} while (is_moving);
 			if (player_board.sequence_restored()) {
