@@ -129,7 +129,9 @@
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="Cube.cpp" />
+    <ClCompile Include="game_time.cpp" />
     <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Tablet.cpp" />
     <ClCompile Include="TAG.cpp" />
   </ItemGroup>
@@ -137,7 +139,9 @@
     <ClInclude Include="Board.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Cube.h" />
+    <ClInclude Include="game_time.h" />
     <ClInclude Include="Menu.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="Tablet.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

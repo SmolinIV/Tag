@@ -6,16 +6,18 @@
 #include "Constants.h"
 #include "Menu.h"
 #include <SFML/Window.hpp>
+#include "game_time.h"
+#include "Player.h"
 #pragma warning(disable : 4996)
 
 
 void init_text(sf::Text& text, float xpos, float ypos, sf::String str, int size_font = 60,
 	sf::Color menu_text_color = sf::Color(RGB_APRICOT), int bord = 3, sf::Color border_color = sf::Color(RGB_DARK_BROWN));
 
-MENU_POINTS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& ERROR);
-void work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error, GAMING_RESULT res);
-void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error);
-GAMING_RESULT player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error);
+PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error);
+PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
+PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error);
+PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
 
 int main()
 {
@@ -41,44 +43,243 @@ int main()
 
 		Board player_board(syst_error);
 		player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
+
+		Player player(player_board);
+
+		//player.board() = player_board;
+
+		PROCESS_STEPS next_step = PROCESS_STEPS::MAIN_MENU;
+		GAMING_RESULT player_result = GAMING_RESULT::GAME_PAUSE;
+
 		do {
-			if (work_with_main_menu(window, background, syst_error) == MENU_POINTS::EXIT || syst_error) { break; }
+			switch (next_step)
+			{
+			case PROCESS_STEPS::MAIN_MENU:
+				next_step = work_with_main_menu(window, background, syst_error);
+				break;
 
-			shuffle_board(window, background, player_board, syst_error);
-			if (syst_error) { break; }
+			case PROCESS_STEPS::START_WITH_SHAFFLING:
+				next_step = shuffle_board(window, background, player.board(), syst_error);
+				break;
 
-			player_gaming(window, background, player_board, syst_error);
-			if (syst_error) { break; }
-		} while (true);
-		if (syst_error) { break; }
+			case PROCESS_STEPS::START_PLAYING:
+				next_step = player_gaming(window, background, player, syst_error, player_result);
+				break;
+
+			case PROCESS_STEPS::GO_TO_POSTGAME_MENU:
+				next_step = work_with_postgame_menu(window, background, player, syst_error, player_result);
+				break;
+
+			//case PROCESS_STEPS::GO_TO_OPTIONS:
+			//	break;
+
+			case PROCESS_STEPS::EXIT:
+				next_step = PROCESS_STEPS::EXIT;
+				break;
+
+			case PROCESS_STEPS::NONE:
+			default:
+				syst_error = std::make_error_code(std::errc::protocol_error);
+				next_step = PROCESS_STEPS::EXIT;
+				break;
+			}
+		} while (next_step != PROCESS_STEPS::EXIT );
 	} while (false);
 
 
 	if (!syst_error) {
-		std::cout << syst_error.message() << std::endl;
-		return syst_error.value();
+		if (syst_error == std::errc::protocol_error) {
+		std::cout << "Something went wrong..." << std::endl;
+		}
+		else {
+			std::cout << syst_error.message() << std::endl;
+			return syst_error.value();
+		}
 	}
-
-	return 0;
 }
 
+PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error) {
 
+	//Шрифт для названия игры
+	sf::Text title;
+	sf::Font font;
+	if (!font.loadFromFile("font/acsiomasupershockc.otf")) {
+		syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
+		return PROCESS_STEPS::EXIT;
+	}
+	title.setFont(font);
+	init_text(title, window.getSize().x / 2, window.getSize().y / 6, L"Пятнашки", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 
-MENU_POINTS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error) {
+	Menu main_menu{ window,{L"Начать игру", L"Настройки", L"Выход"} };
+	int menu_point_number = -1;
+	while (window.isOpen()) { 
+		sf::Event event;
+		while (window.pollEvent(event)) {
+
+			switch (event.type) {
+			case sf::Event::Closed:
+				window.close();
+				break;
+			case sf::Event::KeyPressed:
+				switch (event.key.code) {
+				case sf::Keyboard::Up:
+					main_menu.move_up();
+					break;
+				case sf::Keyboard::Down:
+					main_menu.move_down();
+					break;
+				case sf::Keyboard::Enter:
+					menu_point_number = main_menu.selected();
+				}
+
+			default:
+				break;
+			}
+		}
+		window.clear();
+		window.draw(background);
+		window.draw(title);
+		main_menu.draw(window);
+		window.display();
+		switch (menu_point_number) {
+		case 0: return PROCESS_STEPS::START_WITH_SHAFFLING;
+		case 1: return PROCESS_STEPS::GO_TO_OPTIONS; 
+		case 2: return PROCESS_STEPS::EXIT;
+		default:
+			break;
+		}
+	}
+}
+
+PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
+	sf::Text title;
+	sf::Font font;
+	if (!font.loadFromFile("font/troika.otf")) {
+		syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
+		return PROCESS_STEPS::EXIT;
+	}
+	title.setFont(font);
+	init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Приготовьтесь!", 80);
+	bool is_moving = false;
+	int shuffle_steps = 0;
+	int number_of_swap = 2;
+	while (window.isOpen() && shuffle_steps < number_of_swap) {
+		if (shuffle_steps >= number_of_swap / 2 && (number_of_swap - shuffle_steps) % 10 == 0) {
+			init_text(title, window.getSize().x / 2, window.getSize().y / 8, std::to_string((number_of_swap - shuffle_steps) / 10) + "...", 80);
+		}
+
+		// Обработка действий
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			switch (event.type)
+			{
+			case sf::Event::Closed:
+				window.close();
+				break;
+			default:
+				break;
+			}
+		}
+		do {
+			window.clear();
+			window.draw(background);
+			window.draw(title);
+			player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
+			window.display();
+		} while (is_moving);
+		++shuffle_steps;
+		if (shuffle_steps < number_of_swap) {
+			player_board.shaffle_board(window);
+		}
+		is_moving = true;
+	}
+
+	return PROCESS_STEPS::START_PLAYING;
+}
+
+PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
 	do {
-		//Шрифт для названия игры
 		sf::Text title;
 		sf::Font font;
-		if (!font.loadFromFile("font/acsiomasupershockc.otf")) {
-			syst_error = std::make_error_code(std::errc::no_such_file_or_directory); 
-			return MENU_POINTS::EXIT;
+		if (!font.loadFromFile("font/troika.otf")) {
+			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
+			return PROCESS_STEPS::EXIT;
 		}
 		title.setFont(font);
-		init_text(title, window.getSize().x / 2, window.getSize().y / 6, L"Пятнашки", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
+		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Начали!", 80);
+		bool is_moving = false;
 
-		Menu main_menu{ window,{L"Начать игру", L"Настройки", L"Выход"} };
+		Game_time player_metric(syst_error);
+		if (syst_error) { return PROCESS_STEPS::EXIT; }
+		player_metric.set_position(window.getSize().x - 200, 30);
 
-		MENU_POINTS choice = MENU_POINTS::NONE;
+		while (window.isOpen())
+		{
+			// Обработка действий
+			sf::Event event;
+			while (window.pollEvent(event))
+			{
+				switch (event.type)
+				{
+				case sf::Event::Closed:
+					window.close();
+					break;
+				case sf::Event::MouseButtonPressed:
+					if (event.key.code == sf::Mouse::Left && !is_moving) {
+						sf::Vector2i click_pos = sf::Mouse::getPosition(window);
+						is_moving = player.board().ask_for_moving(window, click_pos, true);
+						if (is_moving) { player.new_move(); }
+					}
+					break;
+				default:
+					break;
+				}
+			}
+			do {
+				window.clear();
+				window.draw(background);
+				window.draw(title);
+				player_metric.draw(window);
+				player.board().draw(window, is_moving);	//is_moving обнуляется внутри функции
+				window.display();
+			} while (is_moving);
+			if (player.board().sequence_restored()) {
+				res = GAMING_RESULT::PC_WIN;
+				player.set_fresult(player_metric.get_ftime());
+				player.set_strresult(player_metric.get_strtime());
+				return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
+			}
+		}
+	} while (false);
+	return PROCESS_STEPS::EXIT;
+}
+
+PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
+
+		sf::RectangleShape deck(sf::Vector2f(500, 500));
+		deck.setPosition(window.getSize().x / 2 - deck.getGlobalBounds().width/2, window.getSize().y / 2 - deck.getGlobalBounds().height / 2);
+		sf::Texture deck_texture;
+		if (!deck_texture.loadFromFile("png/ended_deck1.png")) { 
+			syst_error = std::make_error_code(std::errc::no_such_file_or_directory); 
+			return PROCESS_STEPS::EXIT;
+		}
+		deck.setTexture(&deck_texture);
+
+		//Шрифт для результата игры
+		sf::Text result, time;
+		sf::Font font;
+		if (!font.loadFromFile("font/troika.otf")) { 
+			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
+			return PROCESS_STEPS::EXIT; }
+
+		result.setFont(font);
+		time.setFont(font);
+		init_text(result, window.getSize().x / 2, window.getSize().y / 6, L"Победа!", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
+
+		Menu main_menu{ window,{L"Сыграть ещё раз", L"Настройки", L"Выход"} };
+
+		int menu_point_number = -1;
 		while (window.isOpen()) {
 			sf::Event event;
 			while (window.pollEvent(event)) {
@@ -96,7 +297,7 @@ MENU_POINTS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& ba
 						main_menu.move_down();
 						break;
 					case sf::Keyboard::Enter:
-						choice = main_menu.selected();
+						menu_point_number = main_menu.selected();
 					}
 
 				default:
@@ -105,110 +306,18 @@ MENU_POINTS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& ba
 			}
 			window.clear();
 			window.draw(background);
-			window.draw(title);
+			//window.draw(deck);
+			window.draw(result);
 			main_menu.draw(window);
 			window.display();
-			if (choice != MENU_POINTS::NONE) {
-				if (choice == MENU_POINTS::START) { return choice; }
-				//else if ((choice == MENU_POINTS::OPTINS);
-				else { return choice; }
+			switch (menu_point_number) {
+			case 0: return PROCESS_STEPS::START_WITH_SHAFFLING;
+			case 1: return PROCESS_STEPS::GO_TO_OPTIONS;
+			case 2: return PROCESS_STEPS::EXIT;
+			default:
+				break;
 			}
 		}
-	} while (false);
-}
-
-void shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
-	do {
-		sf::Text title;
-		sf::Font font;
-		if (!font.loadFromFile("font/troika.otf")) {
-			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
-			break;
-		}
-		title.setFont(font);
-		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Приготовьтесь!", 80);
-		bool is_moving = false;
-		int shuffle_steps = 0;
-		int number_of_swap = 60;
-		while (window.isOpen() && shuffle_steps < number_of_swap)
-		{
-			if (shuffle_steps >= number_of_swap / 2 && (number_of_swap - shuffle_steps) % 10 == 0) {
-				init_text(title, window.getSize().x / 2, window.getSize().y /8, std::to_string((number_of_swap - shuffle_steps) / 10) + "...", 80);
-			}
-			// Обработка действий
-			sf::Event event;
-			while (window.pollEvent(event))
-			{
-				switch (event.type)
-				{
-				case sf::Event::Closed:
-					window.close();
-					break;
-				default:
-					break;
-				}
-			}
-			do {
-				window.clear();
-				window.draw(background);
-				window.draw(title);
-				player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
-				window.display();
-			} while (is_moving);
-			++shuffle_steps;
-			if (shuffle_steps < number_of_swap) {
-				player_board.shaffle_board(window);
-			}
-			is_moving = true;
-		}
-	} while (false);
-}
-
-GAMING_RESULT player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
-	do {
-		sf::Text title;
-		sf::Font font;
-		if (!font.loadFromFile("font/troika.otf")) {
-			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
-			break;
-		}
-		title.setFont(font);
-		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Начали!", 80);
-		bool is_moving = false;
-		while (window.isOpen())
-		{
-			// Обработка действий
-			sf::Event event;
-			while (window.pollEvent(event))
-			{
-				switch (event.type)
-				{
-				case sf::Event::Closed:
-					window.close();
-					break;
-				case sf::Event::MouseButtonPressed:
-					if (event.key.code == sf::Mouse::Left && !is_moving) {
-						sf::Vector2i click_pos = sf::Mouse::getPosition(window);
-						is_moving = player_board.ask_for_moving(window, click_pos, true);
-					}
-					break;
-				default:
-					break;
-				}
-			}
-			do {
-				window.clear();
-				window.draw(background);
-				window.draw(title);
-				player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
-				window.display();
-			} while (is_moving);
-			if (player_board.sequence_restored()) {
-				return GAMING_RESULT::PLAYER_WIN;
-			}
-		}
-	} while (false);
-	return GAMING_RESULT::PLAYER_LOSE;
 }
 
 void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size_font,
@@ -222,6 +331,8 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 	mtext.setPosition(xpos - (mtext.getGlobalBounds().width / 2.0f), ypos - mtext.getGlobalBounds().height / 2.0f);
 }
 
+
+
 //Примечания: конструкторы копирования не используются, т.к. достаточно тех, что будут созданы по умолчанию, т.к. нет динамического выделения памяти
 // 
 // Замечания.
@@ -231,6 +342,6 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 // 4. Убрать std::array из board, всё равное возможности не используются, только загружает код.
 // 5. Перегрузить оператор сравнения для Cube.
 // 6. Привязать размер кубиков к доске (по аналогии текска в кубиках/табличках), а так же размеры текстов
-// 
+// 7. Установить const для get-методов
 // 
 //

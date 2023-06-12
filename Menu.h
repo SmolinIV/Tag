@@ -29,7 +29,7 @@ public:
 
 	void move_down();
 
-	MENU_POINTS selected();
+	int selected();
 
 
 	~Menu() {}
@@ -86,16 +86,6 @@ void Menu::move_down() {
 
 }
 
-MENU_POINTS Menu::selected() {
-	switch (selected_point) {
-	case 0:
-		return MENU_POINTS::START;
-	case 1: 
-		return MENU_POINTS::OPTINS;
-	case 2: 
-		return MENU_POINTS::EXIT;
-	default:
-		return MENU_POINTS::NONE;
-	}
-
+int Menu::selected() {
+	return selected_point;
 }
