@@ -162,7 +162,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 	init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Приготовьтесь!", 80);
 	bool is_moving = false;
 	int shuffle_steps = 0;
-	int number_of_swap = 2;
+	int number_of_swap = 60;
 	while (window.isOpen() && shuffle_steps < number_of_swap) {
 		if (shuffle_steps >= number_of_swap / 2 && (number_of_swap - shuffle_steps) % 10 == 0) {
 			init_text(title, window.getSize().x / 2, window.getSize().y / 8, std::to_string((number_of_swap - shuffle_steps) / 10) + "...", 80);
@@ -257,25 +257,28 @@ PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 
 PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
 
-		sf::RectangleShape deck(sf::Vector2f(500, 500));
+	/*	sf::RectangleShape deck(sf::Vector2f(500, 500));
 		deck.setPosition(window.getSize().x / 2 - deck.getGlobalBounds().width/2, window.getSize().y / 2 - deck.getGlobalBounds().height / 2);
 		sf::Texture deck_texture;
 		if (!deck_texture.loadFromFile("png/ended_deck1.png")) { 
 			syst_error = std::make_error_code(std::errc::no_such_file_or_directory); 
 			return PROCESS_STEPS::EXIT;
 		}
-		deck.setTexture(&deck_texture);
+		deck.setTexture(&deck_texture);*/
 
 		//Шрифт для результата игры
-		sf::Text result, time;
+		sf::Text result, time_res;
 		sf::Font font;
 		if (!font.loadFromFile("font/troika.otf")) { 
 			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
 			return PROCESS_STEPS::EXIT; }
 
 		result.setFont(font);
-		time.setFont(font);
-		init_text(result, window.getSize().x / 2, window.getSize().y / 6, L"Победа!", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
+		time_res.setFont(font);
+		
+		init_text(result, window.getSize().x / 2, window.getSize().y / 7, L"Победа!", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
+		init_text(time_res, window.getSize().x / 2, window.getSize().y / 4, L"Время выполнения: " + (sf::String)player.get_strtime_res(), 50,
+			      sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 
 		Menu main_menu{ window,{L"Сыграть ещё раз", L"Настройки", L"Выход"} };
 
@@ -308,6 +311,7 @@ PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleSha
 			window.draw(background);
 			//window.draw(deck);
 			window.draw(result);
+			window.draw(time_res);
 			main_menu.draw(window);
 			window.display();
 			switch (menu_point_number) {
