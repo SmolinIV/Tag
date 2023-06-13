@@ -23,12 +23,12 @@ public:
 	float get_size() const { return c_side; }
 	int get_cube_value() const { return c_cube_value; }
 	void set_position(float x, float y) { c_current_pos = { x,y }; }
-
 	void draw(sf::RenderWindow& window);
 	void change_pos(DIRECTION dir);
 
 	void moving_cube(bool& need_move);
 
+	void reset(int i);
 	~Cube() {}
 };
 
@@ -135,4 +135,11 @@ void Cube::moving_cube(bool& need_move) {
 		need_move = false;
 		c_dir = DIRECTION::NON_DIR;
 		}
+}
+
+void Cube::reset(int i) {
+	if (i != 0) {
+		c_cube_value = i;
+		c_number.setString(std::to_string(i));
+	}
 }

@@ -9,20 +9,21 @@
 class Board
 {
 private:
-	float b_vert_bord = 15.0f;
-	float b_horiz_bord = 15.0f;
-	float b_width = 400.0f + 2 * b_horiz_bord;
-	float b_height = 400.0f + 2 * b_vert_bord;
+	float b_vert_bord;
+	float b_horiz_bord;
+	float b_width;
+	float b_height;
 	sf::RectangleShape b_board;
 	sf::Texture b_texture;
 	sf::Vector2f b_board_pos;
 	Cube* b_moving_cube;	
 	static const int b_board_capacity = 4;
-	std::array<std::array<Cube, b_board_capacity>, b_board_capacity> b_cubes{{{1, 2, 3, 4}, { 5, 6, 7, 8 }, { 9, 10, 11, 12 }, {13, 14, 15, 0}}};
-	struct cube_pos { 
-		int i, j; 
-	} b_empty_cube{3, 3}, b_last_swap_cube{3, 3};
+	std::array<std::array<Cube, b_board_capacity>, b_board_capacity> b_cubes;
+	struct cube_pos { int i, j; } b_empty_cube, b_last_swap_cube;
+
+	void set_cubes_position();
 public:
+	Board();
 	Board(std::error_code& ec);
 	float get_board_width() const { return b_width; }
 	float get_board_height() const { return b_height; }
@@ -32,23 +33,36 @@ public:
 	void swap_cubes(int i1, int j1, int i2, int j2 );
 	bool sequence_restored();
 	void setPosition(float xpos, float ypos);
+	void reset();
 	~Board() {}
 
 };
 
+Board::Board() : b_vert_bord(15.0f),
+b_horiz_bord(15.0f),
+b_width(400.0f + 2 * b_horiz_bord),
+b_height(400.0f + 2 * b_vert_bord),
+b_board_pos{ 0,0 },
+b_cubes{ {{1, 2, 3, 4}, { 5, 6, 7, 8 }, { 9, 10, 11, 12 }, {13, 14, 15, 0}} },
+b_empty_cube{ 3,3 },
+b_last_swap_cube{ 3,3 }
+{}
 
-Board::Board(std::error_code& ec) {
+Board::Board(std::error_code& ec) : Board() {
 	do {
 		b_board.setSize(sf::Vector2f(b_width, b_height));
 		if (!b_texture.loadFromFile("png/deck.png")) { ec.default_error_condition(); break; };
 		b_board.setTexture(&b_texture);
-		b_board_pos = { 0,0 };
 	} while (false);
 }
 
-void Board::setPosition(float xpos, float ypos) {
+void Board::setPosition (float xpos, float ypos) {
 	b_board_pos = { xpos - b_board.getGlobalBounds().width / 2.0f, ypos - b_board.getGlobalBounds().height / 2.0f };
 	b_board.setPosition(b_board_pos);
+	set_cubes_position();
+}
+
+void Board::set_cubes_position() {
 	float cube_size = b_cubes[0][0].get_size();
 	for (int i = 0; i < b_board_capacity; i++) {
 		for (int j = 0; j < b_board_capacity; j++) {
@@ -188,4 +202,22 @@ bool Board::sequence_restored() {
 		}
 	}
 
+}
+
+void Board::reset() {
+	swap_cubes(b_empty_cube.i, b_empty_cube.j, b_board_capacity - 1, b_board_capacity - 1);
+	int number = 1;
+
+	for (int i = 0; i < b_board_capacity; i++) {
+		for (int j = 0; j < b_board_capacity; j++) {
+			if (b_cubes[i][j].get_cube_value() == 0) { break; }
+			b_cubes[i][j].reset(number);
+				++number;
+		}
+	}
+
+	set_cubes_position();
+
+	b_empty_cube = { 3,3 }; 
+	b_last_swap_cube = { 3,3 };
 }

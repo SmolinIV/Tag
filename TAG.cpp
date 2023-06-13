@@ -8,6 +8,7 @@
 #include <SFML/Window.hpp>
 #include "game_time.h"
 #include "Player.h"
+#include "bot.h"
 #pragma warning(disable : 4996)
 
 
@@ -47,9 +48,11 @@ int main()
 		Player player(player_board);
 
 		//player.board() = player_board;
-
+		
 		PROCESS_STEPS next_step = PROCESS_STEPS::MAIN_MENU;
 		GAMING_RESULT player_result = GAMING_RESULT::GAME_PAUSE;
+
+		Bot bot(player_board);
 
 		do {
 			switch (next_step)
@@ -152,7 +155,7 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 }
 
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
-	sf::Text title;
+	sf::Text title, go_to_menu;
 	sf::Font font;
 	if (!font.loadFromFile("font/troika.otf")) {
 		syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
@@ -160,6 +163,9 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 	}
 	title.setFont(font);
 	init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Приготовьтесь!", 80);
+
+	go_to_menu.setFont(font);
+	init_text(go_to_menu, window.getSize().x / 2, window.getSize().y * 0.81f, L"Для возврата в главное меню нажмите ESC", 20);
 	bool is_moving = false;
 	int shuffle_steps = 0;
 	int number_of_swap = 60;
@@ -177,6 +183,10 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 			case sf::Event::Closed:
 				window.close();
 				break;
+			case sf::Event::KeyPressed:
+				if (event.key.code == sf::Keyboard::Escape) {
+					player_board.reset();
+					return PROCESS_STEPS::MAIN_MENU; }
 			default:
 				break;
 			}
@@ -185,6 +195,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 			window.clear();
 			window.draw(background);
 			window.draw(title);
+			window.draw(go_to_menu);
 			player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
 			window.display();
 		} while (is_moving);
@@ -199,8 +210,9 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 }
 
 PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
+	player.reset_results();
 	do {
-		sf::Text title;
+		sf::Text title, go_to_menu;
 		sf::Font font;
 		if (!font.loadFromFile("font/troika.otf")) {
 			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
@@ -208,12 +220,14 @@ PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 		}
 		title.setFont(font);
 		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Начали!", 80);
-		bool is_moving = false;
+		go_to_menu.setFont(font);
+		init_text(go_to_menu, window.getSize().x / 2, window.getSize().y * 0.81f, L"Для возврата в главное меню нажмите ESC", 20);
 
-		Game_time player_metric(syst_error);
+		Game_time running_time(syst_error);
 		if (syst_error) { return PROCESS_STEPS::EXIT; }
-		player_metric.set_position(window.getSize().x - 200, 30);
+		running_time.set_position(window.getSize().x - 200, 30);
 
+		bool is_moving = false;
 		while (window.isOpen())
 		{
 			// Обработка действий
@@ -232,6 +246,12 @@ PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 						if (is_moving) { player.new_move(); }
 					}
 					break;
+				case sf::Event::KeyPressed:
+					if (event.key.code == sf::Keyboard::Escape) {
+						player.board().reset();
+						res = GAMING_RESULT::PLAYER_LOSE;
+						return PROCESS_STEPS::MAIN_MENU;
+					}
 				default:
 					break;
 				}
@@ -240,14 +260,15 @@ PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 				window.clear();
 				window.draw(background);
 				window.draw(title);
-				player_metric.draw(window);
+				running_time.draw(window);
 				player.board().draw(window, is_moving);	//is_moving обнуляется внутри функции
+				window.draw(go_to_menu);
 				window.display();
 			} while (is_moving);
 			if (player.board().sequence_restored()) {
 				res = GAMING_RESULT::PC_WIN;
-				player.set_fresult(player_metric.get_ftime());
-				player.set_strresult(player_metric.get_strtime());
+				player.set_fresult(running_time.get_ftime());
+				player.set_strresult(running_time.get_strtime());
 				return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
 			}
 		}

@@ -2,8 +2,8 @@
 #include "Constants.h"
 #include <string>
 #include "Board.h"
-class Player
-{
+
+class Player {
 private: 
 	Board& p_board;
 	float p_res_ftime;
@@ -11,7 +11,7 @@ private:
 	int p_moves;
 
 public:
-	
+	Player();
 	Player(Board &board);
 
 	float get_ftime_res() const { return p_res_ftime; }

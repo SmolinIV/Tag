@@ -131,6 +131,7 @@
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="game_time.cpp" />
     <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="bot.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Tablet.cpp" />
     <ClCompile Include="TAG.cpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="game_time.h" />
     <ClInclude Include="Menu.h" />
+    <ClInclude Include="bot.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Tablet.h" />
   </ItemGroup>
