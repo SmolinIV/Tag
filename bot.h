@@ -27,12 +27,16 @@ public:
 	Board& board() { return b_board; }
 };
 
-Bot::Bot(const Board& board) :
-	b_board{ board },
+Bot::Bot() :
 	b_res_ftime(0),
 	b_res_strtime{ "00:00" },
 	b_moves(0)
 {}
+
+Bot::Bot(const Board& board) : 
+	Bot() {
+	b_board = board;
+}
 
 void Bot::reset_results() {
 	b_res_ftime = 0;

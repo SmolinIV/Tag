@@ -19,6 +19,9 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error);
 PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
+PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, Bot& bot, std::error_code& syst_error, GAMING_RESULT& res);
+
+void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, Bot& bot);
 
 int main()
 {
@@ -46,13 +49,10 @@ int main()
 		player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
 
 		Player player(player_board);
+		Bot bot;
 
-		//player.board() = player_board;
-		
 		PROCESS_STEPS next_step = PROCESS_STEPS::MAIN_MENU;
 		GAMING_RESULT player_result = GAMING_RESULT::GAME_PAUSE;
-
-		Bot bot(player_board);
 
 		do {
 			switch (next_step)
@@ -76,6 +76,8 @@ int main()
 			//case PROCESS_STEPS::GO_TO_OPTIONS:
 			//	break;
 
+			case PROCESS_STEPS::START_PLAING_WITH_BOT:
+				next_step = player_vs_bot(window, background, player, bot, syst_error, player_result);
 			case PROCESS_STEPS::EXIT:
 				next_step = PROCESS_STEPS::EXIT;
 				break;
@@ -343,6 +345,124 @@ PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleSha
 				break;
 			}
 		}
+}
+
+PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, Bot& bot, std::error_code& syst_error, GAMING_RESULT& res) {
+	player.reset_results();
+	bot.reset_results();
+
+	bot.board() = player.board();
+	move_boards_apart(window, background, player, bot);
+	do {
+		sf::Text title, go_to_menu;
+		sf::Font font;
+		if (!font.loadFromFile("font/troika.otf")) {
+			syst_error = std::make_error_code(std::errc::no_such_file_or_directory);
+			return PROCESS_STEPS::EXIT;
+		}
+		title.setFont(font);
+		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Начали!", 80);
+		go_to_menu.setFont(font);
+		init_text(go_to_menu, window.getSize().x / 2, window.getSize().y * 0.81f, L"Для возврата в главное меню нажмите ESC", 20);
+
+		Game_time running_time(syst_error);
+		if (syst_error) { return PROCESS_STEPS::EXIT; }
+		running_time.set_position(window.getSize().x - 200, 30);
+
+		bool is_moving = false;
+		while (window.isOpen())
+		{
+			// Обработка действий
+			sf::Event event;
+			while (window.pollEvent(event))
+			{
+				switch (event.type)
+				{
+				case sf::Event::Closed:
+					window.close();
+					break;
+				case sf::Event::MouseButtonPressed:
+					if (event.key.code == sf::Mouse::Left && !is_moving) {
+						sf::Vector2i click_pos = sf::Mouse::getPosition(window);
+						is_moving = player.board().ask_for_moving(window, click_pos, true);
+						if (is_moving) { player.new_move(); }
+					}
+					break;
+				case sf::Event::KeyPressed:
+					if (event.key.code == sf::Keyboard::Escape) {
+						player.board().reset();
+						res = GAMING_RESULT::PLAYER_LOSE;
+						return PROCESS_STEPS::MAIN_MENU;
+					}
+				default:
+					break;
+				}
+			}
+			do {
+				window.clear();
+				window.draw(background);
+				window.draw(title);
+				running_time.draw(window);
+				player.board().draw(window, is_moving);	//is_moving обнуляется внутри функции
+				window.draw(go_to_menu);
+				window.display();
+			} while (is_moving);
+			if (player.board().sequence_restored()) {
+				res = GAMING_RESULT::PC_WIN;
+				player.set_fresult(running_time.get_ftime());
+				player.set_strresult(running_time.get_strtime());
+				return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
+			}
+		}
+	} while (false);
+	return PROCESS_STEPS::EXIT;
+}
+
+void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, Bot& bot) {
+
+	float xpos_player = window.getSize().x / 2;
+	float xpos_bot = xpos_player;
+	float ypos_player = window.getSize().y / 2;
+	float ypos_bot = ypos_player;
+	//sf::Vector2f bot_pos = bot.board().get_position();
+	
+	float needed_xpos_player = window.getSize().x * 0.25f;
+	float needed_xpos_bot = window.getSize().x * 0.75f;
+	while (window.isOpen())
+	{
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			switch (event.type)
+			{
+			case sf::Event::Closed:
+				window.close();
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (xpos_player - KOEF_SMOOTHNESS > needed_xpos_player) {
+			xpos_player -= KOEF_SMOOTHNESS;
+			player.board().setPosition(xpos_player,ypos_player);
+		}
+		else {
+			player.board().setPosition(needed_xpos_player, ypos_player);
+		}
+
+		if (xpos_bot + KOEF_SMOOTHNESS < needed_xpos_bot) {
+			xpos_bot += KOEF_SMOOTHNESS;
+			bot.board().setPosition(xpos_bot, ypos_bot);
+		}
+		else {
+			bot.board().setPosition(needed_xpos_bot, ypos_bot);
+		}
+
+		window.clear();
+		//player.board().draw(window);
+
+	}
 }
 
 void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size_font,
