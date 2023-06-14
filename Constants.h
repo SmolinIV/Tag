@@ -5,7 +5,7 @@
 #define RGB_APRICOT 204, 120, 52
 #define RGB_LIGHT_BROWN 222, 150, 1
 
-const int KOEF_SMOOTHNESS = 20; // Для эффекта отскока нужно число, которму не кратнен размер двигаемого объекта
+int KOEF_SMOOTHNESS = 20; // Для эффекта отскока нужно число, которму не кратнен размер двигаемого объекта
 
 enum class DIRECTION
 {

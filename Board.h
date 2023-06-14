@@ -17,23 +17,32 @@ private:
 	sf::Texture b_texture;
 	sf::Vector2f b_board_pos;
 	Cube* b_moving_cube;	
-	static const int b_board_capacity = 4;
-	std::array<std::array<Cube, b_board_capacity>, b_board_capacity> b_cubes;
-	struct cube_pos { int i, j; } b_empty_cube, b_last_swap_cube;
+	static const int b_side_size = 4;
+	std::array<std::array<Cube, b_side_size>, b_side_size> b_cubes;
+	struct cube_pos { int i, j; } b_empty_cube_pos, b_last_swap_cube;
 
 	void set_cubes_position();
 public:
 	Board();
 	Board(std::error_code& ec);
+	Board(Board& other);
 	float get_board_width() const { return b_width; }
 	float get_board_height() const { return b_height; }
+	int get_board_side_size() { return b_side_size; }
+	void setPosition(float xpos, float ypos);
+
+	void draw(sf::RenderWindow& window);
 	void draw(sf::RenderWindow& window, bool &need_move);
+
 	void shaffle_board(sf::RenderWindow& window);
 	bool ask_for_moving(sf::RenderWindow& window, sf::Vector2i click_pos, bool mouse_control = false);
 	void swap_cubes(int i1, int j1, int i2, int j2 );
 	bool sequence_restored();
-	void setPosition(float xpos, float ypos);
+	std::array<Cube, b_side_size>& operator[](unsigned int index) { return b_cubes[index]; }
+	int operator()(unsigned int i, unsigned int j) { return b_cubes[i][j].get_cube_value(); } // Проще в реализации и эффективнее с точ.зр. производителдьности
+	//Board& operator=(Board& other);
 	void reset();
+
 	~Board() {}
 
 };
@@ -44,7 +53,7 @@ b_width(400.0f + 2 * b_horiz_bord),
 b_height(400.0f + 2 * b_vert_bord),
 b_board_pos{ 0,0 },
 b_cubes{ {{1, 2, 3, 4}, { 5, 6, 7, 8 }, { 9, 10, 11, 12 }, {13, 14, 15, 0}} },
-b_empty_cube{ 3,3 },
+b_empty_cube_pos{ 3,3 },
 b_last_swap_cube{ 3,3 }
 {}
 
@@ -56,6 +65,26 @@ Board::Board(std::error_code& ec) : Board() {
 	} while (false);
 }
 
+//Board& Board::operator=(Board& other) {
+//	b_vert_bord = other.b_vert_bord;
+//	b_horiz_bord = other.b_horiz_bord;
+//	b_width = other.b_width;
+//	b_height = other.b_height;
+//	b_board = other.b_board;
+//	b_texture = other.b_texture;
+//	b_board_pos = other.b_board_pos;
+//	b_moving_cube = other.b_moving_cube;
+//	std::array<std::array<Cube, b_side_size>, b_side_size> b_cubes;
+//	b_empty_cube_pos = other.b_empty_cube_pos;
+//	b_last_swap_cube = other.b_last_swap_cube;
+//	for (int i = 0; i < b_side_size; i++) {
+//		for (int j = 0; j < b_side_size; j++) {
+//			b_cubes[i][j] = other.b_cubes[i][j];
+//		}
+//	}
+//	return *this;
+//}
+
 void Board::setPosition (float xpos, float ypos) {
 	b_board_pos = { xpos - b_board.getGlobalBounds().width / 2.0f, ypos - b_board.getGlobalBounds().height / 2.0f };
 	b_board.setPosition(b_board_pos);
@@ -64,33 +93,26 @@ void Board::setPosition (float xpos, float ypos) {
 
 void Board::set_cubes_position() {
 	float cube_size = b_cubes[0][0].get_size();
-	for (int i = 0; i < b_board_capacity; i++) {
-		for (int j = 0; j < b_board_capacity; j++) {
+	for (int i = 0; i < b_side_size; i++) {
+		for (int j = 0; j < b_side_size; j++) {
 			b_cubes[i][j].set_position(b_board_pos.x + b_horiz_bord + cube_size * j, b_board_pos.y + b_vert_bord + cube_size * i);
+		}
+	}
+}
+void Board::draw(sf::RenderWindow& window) {
+	window.draw(b_board);
+	for (int i = 0; i < b_side_size; i++) {
+		for (int j = 0; j < b_side_size; j++) {
+			b_cubes[i][j].draw(window);
 		}
 	}
 }
 
 void Board::draw(sf::RenderWindow& window, bool& need_move) {
-	window.draw(b_board);
-	float cube_size = b_cubes[0][0].get_size();
-	for (int i = 0; i < b_board_capacity; i++) {
-		for (int j = 0; j < b_board_capacity; j++) {
-			//b_cubes[i][j].set_position(b_board_pos.x + b_horiz_bord + cube_size * j, b_board_pos.y + b_vert_bord + cube_size * i);
-			b_cubes[i][j].draw(window);
-		}
-	}
-
-	window.draw(b_board);
 	if (need_move) {
 		b_moving_cube->moving_cube(need_move);
 	}
-	for (int i = 0; i < b_board_capacity; i++) {
-		for (int j = 0; j < b_board_capacity; j++) {
-			b_cubes[i][j].draw(window);
-		}
-	}
-
+	draw(window);
 }
 
 bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bool mouse_control) {
@@ -105,11 +127,11 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 		j /= b_cubes[0][0].get_size();
 	}
 	else {
-		i = target_pos.y;
-		j = target_pos.x;
+		i = target_pos.x;
+		j = target_pos.y;
 		if (i < 0 || j < 0) { return false; }
 	}
-	if (i >= b_board_capacity || j >= b_board_capacity) { return false; }
+	if (i >= b_side_size || j >= b_side_size) { return false; }
 
 	if (i > 0) {
 		if (b_cubes[i - 1][j].get_cube_value() == 0) {
@@ -117,19 +139,19 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 			b_cubes[i][j].change_pos(DIRECTION::DOWN);
 			b_cubes[i - 1][j].change_pos(DIRECTION::UP);
 			b_moving_cube = &b_cubes[i - 1][j];
-			b_empty_cube = { i,j };
+			b_empty_cube_pos = { i,j };
 			b_last_swap_cube = { i - 1,j };
 			return true;
 		}
 	}
 
-	if (i < b_board_capacity - 1) {
+	if (i < b_side_size - 1) {
 		if (b_cubes[i + 1][j].get_cube_value() == 0) {
 			swap_cubes(i + 1, j, i, j);
 			b_cubes[i][j].change_pos(DIRECTION::UP);
 			b_cubes[i + 1][j].change_pos(DIRECTION::DOWN);
 			b_moving_cube = &b_cubes[i + 1][j];
-			b_empty_cube = { i,j };
+			b_empty_cube_pos = { i,j };
 			b_last_swap_cube = { i + 1,j };
 			return true;
 		}
@@ -141,19 +163,19 @@ bool Board::ask_for_moving(sf::RenderWindow& window, sf::Vector2i target_pos, bo
 			b_cubes[i][j].change_pos(DIRECTION::RIGHT);
 			b_cubes[i][j - 1].change_pos(DIRECTION::LEFT);
 			b_moving_cube = &b_cubes[i][j - 1];
-			b_empty_cube = { i,j };
+			b_empty_cube_pos = { i,j };
 			b_last_swap_cube = { i,j - 1 };
 			return true;
 		}
 	}
 
-	if (j < b_board_capacity - 1) {
+	if (j < b_side_size - 1) {
 		if (b_cubes[i][j + 1].get_cube_value() == 0) {
 			swap_cubes(i, j + 1, i, j);
 			b_cubes[i][j].change_pos(DIRECTION::LEFT);
 			b_cubes[i][j + 1].change_pos(DIRECTION::RIGHT);
 			b_moving_cube = &b_cubes[i][j + 1];
-			b_empty_cube = { i,j };
+			b_empty_cube_pos = { i,j };
 			b_last_swap_cube = { i,j + 1 };
 			return true;
 		}
@@ -177,13 +199,13 @@ void Board::shaffle_board(sf::RenderWindow& window) {
 		unit;
 
 	while (true) {
-		next_i = b_empty_cube.i;
-		next_j = b_empty_cube.j;
+		next_i = b_empty_cube_pos.i;
+		next_j = b_empty_cube_pos.j;
 		unit = (rand() % 2) ? (1) : (-1);
-		(rand() % 2) ? (next_i = b_empty_cube.i + unit) : (next_j = b_empty_cube.j + unit);
+		(rand() % 2) ? (next_i = b_empty_cube_pos.i + unit) : (next_j = b_empty_cube_pos.j + unit);
 
 		if (!(next_i == b_last_swap_cube.i && next_j == b_last_swap_cube.j)) {
-			if (ask_for_moving(window, sf::Vector2i(next_j, next_i))) {
+			if (ask_for_moving(window, sf::Vector2i(next_i, next_j))) {
 				break;
 			}
 		}
@@ -194,9 +216,9 @@ bool Board::sequence_restored() {
 	if (!(b_cubes[3][2].get_cube_value() == 15 && b_cubes[3][3].get_cube_value() == 0)) { return false; }
 
 	int cube_value = 1;
-	for (int i = 0; i < b_board_capacity; i++) {
-		for (int j = 0; j < b_board_capacity; j++) {
-			if (i == b_board_capacity - 1 && j == b_board_capacity - 1) { return true; }
+	for (int i = 0; i < b_side_size; i++) {
+		for (int j = 0; j < b_side_size; j++) {
+			if (i == b_side_size - 1 && j == b_side_size - 1) { return true; }
 			if (!(b_cubes[i][j].get_cube_value() == cube_value)) { return false; }
 			++cube_value;
 		}
@@ -205,11 +227,11 @@ bool Board::sequence_restored() {
 }
 
 void Board::reset() {
-	swap_cubes(b_empty_cube.i, b_empty_cube.j, b_board_capacity - 1, b_board_capacity - 1);
+	swap_cubes(b_empty_cube_pos.i, b_empty_cube_pos.j, b_side_size - 1, b_side_size - 1);
 	int number = 1;
 
-	for (int i = 0; i < b_board_capacity; i++) {
-		for (int j = 0; j < b_board_capacity; j++) {
+	for (int i = 0; i < b_side_size; i++) {
+		for (int j = 0; j < b_side_size; j++) {
 			if (b_cubes[i][j].get_cube_value() == 0) { break; }
 			b_cubes[i][j].reset(number);
 				++number;
@@ -218,6 +240,6 @@ void Board::reset() {
 
 	set_cubes_position();
 
-	b_empty_cube = { 3,3 }; 
+	b_empty_cube_pos = { 3,3 }; 
 	b_last_swap_cube = { 3,3 };
 }
