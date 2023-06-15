@@ -158,7 +158,7 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
 
-	KOEF_SMOOTHNESS = 20;
+	KOEF_SMOOTHNESS = 50;
 	player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
 	sf::Text title, go_to_menu;
 	sf::Font font;
@@ -210,7 +210,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 		}
 		is_moving = true;
 	}
-	KOEF_SMOOTHNESS = 10;
+	KOEF_SMOOTHNESS = 100;
 	return PROCESS_STEPS::START_PLAYING;
 }
 
@@ -482,8 +482,8 @@ void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background,
 
 		window.clear();
 		window.draw(background);
-		player.board().draw(window);
 		bot.board().draw(window);
+		player.board().draw(window);
 		window.display();
 		if (player_board_in_place && bot_board_in_place) { break; }
 	}
@@ -512,5 +512,5 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 // 5. Перегрузить оператор сравнения для Cube.
 // 6. Привязать размер кубиков к доске (по аналогии текска в кубиках/табличках), а так же размеры текстов
 // 7. Установить const для get-методов
-// 
+// 8. Убери настройки (пока что:) ). Вместо них - выбор одиночной игры или против компьютера
 //

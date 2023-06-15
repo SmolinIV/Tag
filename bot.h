@@ -27,12 +27,16 @@ private:
 	void search_cubes_and_pos();
 
 	enum class STAGE {
-		MOVE_UP,
-		MOVE_DOWN,
-		MOVE_LEFT,
-		MOVE_RIGHT,
+		GO_UNDER,
+		GO_TO_POS_UP,
+		GO_TO_POS_LEFT,
+		GO_TO_POS_RIGHT,
+		LITTLE_CIRCLE,
+		MEDIUM_CIRCLE,
 		NONE
 	} b_stage;
+
+
 
 
 	void move_up_empty(sf::RenderWindow& window);
@@ -41,9 +45,12 @@ private:
 	void move_right_empty(sf::RenderWindow& window);
 
 	void up_to_pos_req(sf::RenderWindow& window);
-	void down_to_pos_req(sf::RenderWindow& window);
 	void left_to_pos_req(sf::RenderWindow& window);
 	void right_to_pos_req(sf::RenderWindow& window);
+	
+	void assemble_row_exept_last_cube(sf::RenderWindow& window);
+	void placed_last_cube(sf::RenderWindow& window);
+	void assemble_last_tow_rows(sf::RenderWindow& window);
 
 public:
 	Bot();
@@ -128,43 +135,55 @@ void Bot::search_cubes_and_pos() {
 
 void Bot::assemble_board(sf::RenderWindow& window) {
 	
-	//if (b_cube_value == 4) { return; }
+	if (b_cube_value >= 4) { return; }
 
-	if (b_is_moving) { return; }
-	/*
-	if (b_stage == STAGE::NONE); {
-		if (b_assemble_done) { return; }
+	if (b_assemble_done || b_is_moving) { return; }
 
-		if (!b_is_moving) {
-			while (true) {
-				if (cp_req_cube_pos == cp_home_pos) {
-					b_cube_placed = true;
-				}
-				else {
-					break;
-				}
+	switch (b_stage)
+	{
+	case Bot::STAGE::NONE:
+		break;
+	case Bot::STAGE::GO_TO_POS_UP:
+		up_to_pos_req(window);
+		return;
+	case Bot::STAGE::GO_TO_POS_LEFT:
+		left_to_pos_req(window);
+		return;
+	case Bot::STAGE::GO_TO_POS_RIGHT:
+		right_to_pos_req(window);
+		return;
+	//case Bot::STAGE::LITTLE_CIRCLE:
+		break;
+//	case Bot::STAGE::MEDIUM_CIRCLE:
+		break;
+	default:
+		break;
+	}
 
-				if (b_cube_placed) {
-					++b_cube_value;
-					search_cubes_and_pos();
-					b_cube_placed = false;
-				}
-			}
-		}*/
-		if (cp_empty_pos.i <= cp_home_pos.i) {
-			move_down_empty(window);
-			return;
-		} 
-		if (cp_empty_pos.i > cp_home_pos.i) {
-			move_up_empty(window);
-			return;
+	while (true) {
+		if (cp_req_cube_pos == cp_home_pos) {
+			b_cube_placed = true;
 		}
-	
+		else {
+			break;
+		}
+
+		if (b_cube_placed) {
+			++b_cube_value;
+			search_cubes_and_pos();
+			b_cube_placed = false;
+		}
+	}
+	if (b_cube_value == )
+	assemble_row_exept_last_cube(window);	
 }
 
 void Bot::move_up_empty(sf::RenderWindow& window) {
 	if (b_board.ask_for_moving(window, { cp_empty_pos.i - 1, cp_empty_pos.j })) {
-		cp_empty_pos.i -= 1;
+		--cp_empty_pos.i;
+		if (cp_empty_pos == cp_req_cube_pos) {
+			++cp_req_cube_pos.i;
+		}
 		b_is_moving = true;
 		return;
 	}
@@ -172,7 +191,10 @@ void Bot::move_up_empty(sf::RenderWindow& window) {
 
 void Bot::move_down_empty(sf::RenderWindow& window) {
 	if (b_board.ask_for_moving(window, { cp_empty_pos.i + 1, cp_empty_pos.j })) {
-		cp_empty_pos.i += 1;
+		++cp_empty_pos.i;
+		if (cp_empty_pos == cp_req_cube_pos) {
+			--cp_req_cube_pos.i;
+		}
 		b_is_moving = true;
 		return;
 	}
@@ -180,15 +202,156 @@ void Bot::move_down_empty(sf::RenderWindow& window) {
 
 void Bot::move_left_empty(sf::RenderWindow& window) {
 	if (b_board.ask_for_moving(window, { cp_empty_pos.i, cp_empty_pos.j - 1 })) {
-		cp_empty_pos.j -= 1;
+		--cp_empty_pos.j;
+		if (cp_empty_pos == cp_req_cube_pos) {
+			++cp_req_cube_pos.j;
+		}
 		b_is_moving = true;
 		return;
 	}
 }
 void Bot::move_right_empty(sf::RenderWindow& window) {
 	if (b_board.ask_for_moving(window, { cp_empty_pos.i, cp_empty_pos.j + 1 })) {
-		cp_empty_pos.j += 1;
+		++cp_empty_pos.j;
+		if (cp_empty_pos == cp_req_cube_pos) {
+			--cp_req_cube_pos.j;
+		}
 		b_is_moving = true;
+		return;
+	}
+}
+
+void Bot::left_to_pos_req(sf::RenderWindow& window) {
+
+	if (cp_empty_pos.j < cp_req_cube_pos.j) {
+		if (cp_empty_pos.i == cp_req_cube_pos.i) {
+			move_right_empty(window);
+		}
+		else {
+			if (cp_empty_pos.i < cp_req_cube_pos.i) {
+				move_down_empty(window);
+			}
+			else {
+				move_up_empty(window);
+			}
+		}
+	}
+	else {
+		if (cp_empty_pos.i == cp_req_cube_pos.i) {
+			if (cp_empty_pos.i == b_side_size - 1) {
+				move_up_empty(window);
+			}
+			else {
+				move_down_empty(window);
+			}
+		}
+		else {
+			move_left_empty(window);
+		}
+	}
+
+	if (cp_req_cube_pos.j == cp_home_pos.j) {
+		b_stage = STAGE::NONE;
+		return;
+	}
+}
+
+void Bot::right_to_pos_req(sf::RenderWindow& window) {
+	
+	if (cp_empty_pos.j > cp_req_cube_pos.j) {
+		if (cp_empty_pos.i == cp_req_cube_pos.i) {
+			move_left_empty(window);
+		}
+		else {
+			if (cp_empty_pos.i < cp_req_cube_pos.i) {
+				move_down_empty(window);
+			}
+			else { 
+				move_up_empty(window);
+			}
+		}
+	}
+	else {
+		if (cp_empty_pos.i == cp_req_cube_pos.i) {
+			if (cp_empty_pos.i == b_side_size - 1) {
+				move_up_empty(window);
+			}
+			else {
+				move_down_empty(window);
+			}
+		}
+		else {
+			move_right_empty(window);
+		}
+	}
+
+	if (cp_req_cube_pos.j == cp_home_pos.j) {
+		b_stage = STAGE::NONE;
+		return;
+	}
+
+}
+
+
+void Bot::up_to_pos_req(sf::RenderWindow& window) {
+
+	if (cp_empty_pos.i < cp_req_cube_pos.i) {
+		if (cp_empty_pos.j == cp_req_cube_pos.j) {
+			move_down_empty(window);
+		}
+		else {
+			if (cp_empty_pos.j > cp_req_cube_pos.j) {
+				move_left_empty(window);
+			}
+			else {
+				move_right_empty(window);
+			}
+		}
+	}
+	else {
+		if (cp_empty_pos.j == cp_req_cube_pos.j) {
+			if (cp_empty_pos.j == b_side_size - 1) {
+				move_left_empty(window);
+			}
+			else {
+				move_right_empty(window);
+			}
+		}
+		else {
+			move_up_empty(window);
+		}
+	}
+
+	if (cp_req_cube_pos.i == cp_home_pos.i) {
+		b_stage = STAGE::NONE;
+		return;
+	}
+}
+
+void Bot::assemble_row_exept_last_cube(sf::RenderWindow& window) {
+	if (cp_empty_pos.i <= cp_home_pos.i) {
+		if (cp_empty_pos.j < cp_req_cube_pos.j) {
+			b_stage = STAGE::GO_TO_POS_LEFT;
+			left_to_pos_req(window);
+		}
+		else {
+			move_down_empty(window);
+		}
+		return;
+	}
+	else {
+		if (cp_req_cube_pos.j < cp_home_pos.j) {
+			b_stage = STAGE::GO_TO_POS_RIGHT;
+			right_to_pos_req(window);
+		}
+		else if (cp_req_cube_pos.j > cp_home_pos.j) {
+			b_stage = STAGE::GO_TO_POS_LEFT;
+			left_to_pos_req(window);
+		}
+		else {
+			b_stage = STAGE::GO_TO_POS_UP;
+			up_to_pos_req(window);
+		}
 		return;
 	}
 }
