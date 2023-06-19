@@ -158,7 +158,7 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
 
-	KOEF_SMOOTHNESS = 50;
+	KOEF_SMOOTHNESS = 20;
 	player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
 	sf::Text title, go_to_menu;
 	sf::Font font;
@@ -210,7 +210,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 		}
 		is_moving = true;
 	}
-	KOEF_SMOOTHNESS = 100;
+	KOEF_SMOOTHNESS = 10;
 	return PROCESS_STEPS::START_PLAYING;
 }
 
@@ -374,7 +374,7 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 		init_text(player_title, window.getSize().x *0.25f, window.getSize().y * 0.17f, L"Вы", 50);
 		bot_title.setFont(font);
 		init_text(bot_title, window.getSize().x * 0.75f, window.getSize().y * 0.17f, L"Компьютер", 50);
-
+		
 		
 
 		Game_time running_time(syst_error);
@@ -386,8 +386,7 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 		{
 			// Обработка действий
 			sf::Event event;
-			while (window.pollEvent(event))
-			{
+			while (window.pollEvent(event)) {
 				switch (event.type)
 				{
 				case sf::Event::Closed:
@@ -410,25 +409,28 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 					break;
 				}
 			}
-			do {
-				bot.assemble_board(window);
-				window.clear();
-				window.draw(background);
-				window.draw(title);
-				window.draw(player_title);
-				window.draw(bot_title);
-				running_time.draw(window);
-				player.board().draw(window, is_moving);	//is_moving обнуляется внутри функции
-				bot.board().draw(window, *bot.get_permit_to_move());
-				window.draw(go_to_menu);
-				window.display();
-			} while (is_moving);
-			if (player.board().sequence_restored()) {
-				res = GAMING_RESULT::PC_WIN;
-				player.set_fresult(running_time.get_ftime());
-				player.set_strresult(running_time.get_strtime());
-				return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
-			}
+				//if (event.key.code == sf::Mouse::Left || !bot.assemble_done()) {
+					do {
+						bot.assemble_board(window);
+						window.clear();
+						window.draw(background);
+						window.draw(title);
+						window.draw(player_title);
+						window.draw(bot_title);
+						running_time.draw(window);
+						player.board().draw(window, is_moving);	//is_moving обнуляется внутри функции
+						bot.board().draw(window, *bot.get_permit_to_move());
+						window.draw(go_to_menu);
+						window.display();
+					} while (is_moving);
+					if (player.board().sequence_restored()) {
+						res = GAMING_RESULT::PC_WIN;
+						player.set_fresult(running_time.get_ftime());
+						player.set_strresult(running_time.get_strtime());
+						return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
+					}
+				//}
+			
 		}
 	} while (false);
 	return PROCESS_STEPS::EXIT;
@@ -513,4 +515,5 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 // 6. Привязать размер кубиков к доске (по аналогии текска в кубиках/табличках), а так же размеры текстов
 // 7. Установить const для get-методов
 // 8. Убери настройки (пока что:) ). Вместо них - выбор одиночной игры или против компьютера
+// 9. assemble_row_exept_last_cube переделать под "шаговый" алгоритм
 //
