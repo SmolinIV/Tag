@@ -29,9 +29,12 @@ private:
 			return (this->i == other.i && this->j == other.j);
 		}
 
+		bool operator!=(Cube_position& other) {
+			return !(this->i == other.i && this->j == other.j);
+		}
+
 	} cp_empty_pos, cp_req_cube_pos, cp_home_pos, cp_temp_pos;
 
-	void search_cubes_and_pos();
 
 	enum class STAGE {
 		ASSEMBLE_ROW,
@@ -51,6 +54,9 @@ private:
 		NONE
 	} b_moving_method;
 
+
+	void search_cubes_and_pos();
+	void search_certain_cube_and_pos();
 
 	void move_empty_up(sf::RenderWindow& window);
 	void move_empty_down(sf::RenderWindow& window);
@@ -216,10 +222,9 @@ void Bot::assemble_board(sf::RenderWindow& window) {
 			b_cube_placed = false;
 			b_av.stage_step = 1;
 		}
-	}
-
-	if (b_assemble_done) {
-		return; }
+		if (b_assemble_done) { return; }
+	}  
+	
 
 	// Сборка всех рядов кроме двух последних
 	if (cp_home_pos.i < b_side_size - 2) {
@@ -241,6 +246,7 @@ void Bot::assemble_board(sf::RenderWindow& window) {
 		}
 	}
 	else {
+		b_av.stage_step = 1;
 		b_stage = STAGE::ASSEMBLE_LAST_ROWS;
 		assemble_last_two_rows(window);
 	}
@@ -586,6 +592,108 @@ void Bot::little_circle_movement(sf::RenderWindow& window) {
 	}
 }
 
+//Поиск кубика и возврат в caller при нахождени, без каких-либо проверок (в отличии от search_cubes_and_pos). !Функция оптимизирована только под последние две строки!
+void Bot::search_certain_cube_and_pos() {
+
+	cp_home_pos.i = (b_req_cube_value - 1) / b_side_size;
+	cp_home_pos.j = b_req_cube_value - (cp_home_pos.i * b_side_size) - 1;
+
+	for (int i = b_side_size - 2; i < b_side_size; i++) {
+		for (int j = 0; j < b_side_size; j++) {
+			if (b_board(i,j) == b_req_cube_value) {
+				cp_req_cube_pos = { i,j };
+				return;
+			}
+		}
+	}
+}
+
 void Bot::assemble_last_two_rows(sf::RenderWindow& window) {
 
+	switch (b_av.stage_step) {
+	case 1:
+		++b_av.stage_step;
+		b_req_cube_value = 9;
+		search_certain_cube_and_pos();
+		cp_temp_pos = { cp_req_cube_pos.i + 1,cp_req_cube_pos.j };
+		if (cp_req_cube_pos == cp_home_pos) {
+			b_req_cube_value = 10;
+			search_certain_cube_and_pos();
+			if (cp_req_cube_pos != cp_temp_pos && cp_re)
+		}
+		return;
+	case 2:
+		++b_av.stage_step;
+		return;
+	case 3:
+		++b_av.stage_step;
+		return;
+	case 4:
+		++b_av.stage_step;
+		return;
+	case 5:
+		++b_av.stage_step;
+		return;
+	case 6:
+		++b_av.stage_step;
+		return;
+	case 7:
+		++b_av.stage_step;
+		return;
+	case 8:
+		++b_av.stage_step;
+		return;
+	case 9:
+		++b_av.stage_step;
+		return;
+	case 10:
+		++b_av.stage_step;
+		return;
+	case 11:
+		++b_av.stage_step;
+		return;
+	case 12:
+		++b_av.stage_step;
+		return;
+	case 13:
+		++b_av.stage_step;
+		return;
+	case 14:
+		++b_av.stage_step;
+		return;
+	case 15:
+		++b_av.stage_step;
+		return;
+	case 16:
+		++b_av.stage_step;
+		return;
+	case 17:
+		++b_av.stage_step;
+		return;
+	case 18:
+		++b_av.stage_step;
+		return;
+	case 19:
+		++b_av.stage_step;
+		return;
+	case 20:
+		++b_av.stage_step;
+		return;
+	case 21:
+		++b_av.stage_step;
+		return;
+	case 22:
+		++b_av.stage_step;
+		return;
+	case 23:
+		++b_av.stage_step;
+		return;
+	case 24:
+		++b_av.stage_step;
+		return;
+	case 25:
+		++b_av.stage_step;
+		return;
+	}
 }
+
