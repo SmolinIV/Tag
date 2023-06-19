@@ -76,6 +76,8 @@ private:
 	void middle_circle_movement(sf::RenderWindow& window);
 	void little_circle_movement(sf::RenderWindow& window);
 
+	bool move_cube_to_given_pos(sf::RenderWindow& window, Cube_position& given_pos);
+
 public:
 	Bot();
 	Bot(Board& board);
@@ -610,90 +612,23 @@ void Bot::search_certain_cube_and_pos() {
 
 void Bot::assemble_last_two_rows(sf::RenderWindow& window) {
 
-	switch (b_av.stage_step) {
-	case 1:
-		++b_av.stage_step;
-		b_req_cube_value = 9;
-		search_certain_cube_and_pos();
-		cp_temp_pos = { cp_req_cube_pos.i + 1,cp_req_cube_pos.j };
-		if (cp_req_cube_pos == cp_home_pos) {
-			b_req_cube_value = 10;
-			search_certain_cube_and_pos();
-			if (cp_req_cube_pos != cp_temp_pos && cp_re)
-		}
-		return;
-	case 2:
-		++b_av.stage_step;
-		return;
-	case 3:
-		++b_av.stage_step;
-		return;
-	case 4:
-		++b_av.stage_step;
-		return;
-	case 5:
-		++b_av.stage_step;
-		return;
-	case 6:
-		++b_av.stage_step;
-		return;
-	case 7:
-		++b_av.stage_step;
-		return;
-	case 8:
-		++b_av.stage_step;
-		return;
-	case 9:
-		++b_av.stage_step;
-		return;
-	case 10:
-		++b_av.stage_step;
-		return;
-	case 11:
-		++b_av.stage_step;
-		return;
-	case 12:
-		++b_av.stage_step;
-		return;
-	case 13:
-		++b_av.stage_step;
-		return;
-	case 14:
-		++b_av.stage_step;
-		return;
-	case 15:
-		++b_av.stage_step;
-		return;
-	case 16:
-		++b_av.stage_step;
-		return;
-	case 17:
-		++b_av.stage_step;
-		return;
-	case 18:
-		++b_av.stage_step;
-		return;
-	case 19:
-		++b_av.stage_step;
-		return;
-	case 20:
-		++b_av.stage_step;
-		return;
-	case 21:
-		++b_av.stage_step;
-		return;
-	case 22:
-		++b_av.stage_step;
-		return;
-	case 23:
-		++b_av.stage_step;
-		return;
-	case 24:
-		++b_av.stage_step;
-		return;
-	case 25:
-		++b_av.stage_step;
-		return;
-	}
 }
 
+
+
+bool Bot::move_cube_to_given_pos(sf::RenderWindow& window, Cube_position& given_pos) {
+	cp_home_pos = given_pos;
+	if (cp_req_cube_pos.i > cp_home_pos.i) {
+		move_req_up_to_pos(window);
+		return false;
+	}
+	else if (cp_req_cube_pos.j > cp_home_pos.j) {
+		move_req_left_to_pos(window);
+		return false;
+	}
+	else if (cp_req_cube_pos.j < cp_home_pos.j) {
+		move_req_right_to_pos(window);
+		return false;
+	}
+	return true;
+}
