@@ -15,11 +15,11 @@
 void init_text(sf::Text& text, float xpos, float ypos, sf::String str, int size_font = 60,
 	sf::Color menu_text_color = sf::Color(RGB_APRICOT), int bord = 3, sf::Color border_color = sf::Color(RGB_DARK_BROWN));
 
-PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error);
-PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
+PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error);
+PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win);
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error);
-PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
-PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res);
+PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win);
+PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win);
 
 void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, Bot& bot);
 
@@ -50,33 +50,42 @@ int main()
 
 		Player player(player_board);
 
-		PROCESS_STEPS next_step = PROCESS_STEPS::MAIN_MENU;
-		GAMING_RESULT player_result = GAMING_RESULT::GAME_PAUSE;
-
+		PROCESS_STEPS next_step = PROCESS_STEPS::GO_TO_MAIN_MENU;
+		PROCESS_STEPS last_game = PROCESS_STEPS::NONE;
+		bool player_win = false;
 		do {
 			switch (next_step)
 			{
-			case PROCESS_STEPS::MAIN_MENU:
-				next_step = work_with_main_menu(window, background, syst_error);
+			case PROCESS_STEPS::GO_TO_MAIN_MENU:
+				next_step = main_menu(window, background, syst_error);
+				last_game = next_step;
 				break;
 
-			case PROCESS_STEPS::START_WITH_SHAFFLING:
+			case PROCESS_STEPS::START_SHAFFLING:
 				next_step = shuffle_board(window, background, player.board(), syst_error);
 				break;
 
 			case PROCESS_STEPS::GO_TO_POSTGAME_MENU:
-				next_step = work_with_postgame_menu(window, background, player, syst_error, player_result);
+				next_step = postgame_menu(window, background, player, syst_error, player_win);
+				if (next_step == PROCESS_STEPS::RESTART_GAME) {
+					next_step = last_game;
+				}
 				break;
 
-			//case PROCESS_STEPS::GO_TO_OPTIONS:
-			//	break;
-
 			case PROCESS_STEPS::START_PLAYING:
-				//next_step = player_gaming(window, background, player, syst_error, player_result);
-				//break;
+				next_step = shuffle_board(window, background, player.board(), syst_error);
+				if (next_step != PROCESS_STEPS::START_PLAYING) {
+					break;
+				}
+				next_step = single_player(window, background, player, syst_error, player_win);
+				break;
 
-			case PROCESS_STEPS::START_PLAING_WITH_BOT:
-				next_step = player_vs_bot(window, background, player, syst_error, player_result);
+			case PROCESS_STEPS::START_PLAYING_WITH_BOT:
+				next_step = shuffle_board(window, background, player.board(), syst_error);
+				if (next_step != PROCESS_STEPS::START_PLAYING) {
+					break;
+				}
+				next_step = player_vs_bot(window, background, player, syst_error, player_win);
 				break;
 			case PROCESS_STEPS::EXIT:
 				next_step = PROCESS_STEPS::EXIT;
@@ -103,7 +112,7 @@ int main()
 	}
 }
 
-PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error) {
+PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error) {
 
 	//Шрифт для названия игры
 	sf::Text title;
@@ -115,7 +124,7 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 	title.setFont(font);
 	init_text(title, window.getSize().x / 2, window.getSize().y / 6, L"Пятнашки", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 
-	Menu main_menu{ window,{L"Начать игру", L"Настройки", L"Выход"} };
+	Menu main_menu{ window,{L"Одиночная игра", L"Бой с компьютером", L"Выход"} };
 	int menu_point_number = -1;
 	while (window.isOpen()) { 
 		sf::Event event;
@@ -147,8 +156,8 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 		main_menu.draw(window);
 		window.display();
 		switch (menu_point_number) {
-		case 0: return PROCESS_STEPS::START_WITH_SHAFFLING;
-		case 1: return PROCESS_STEPS::GO_TO_OPTIONS; 
+		case 0: return PROCESS_STEPS::START_PLAYING;
+		case 1: return PROCESS_STEPS::START_PLAYING_WITH_BOT; 
 		case 2: return PROCESS_STEPS::EXIT;
 		default:
 			break;
@@ -158,7 +167,7 @@ PROCESS_STEPS work_with_main_menu(sf::RenderWindow& window, sf::RectangleShape& 
 
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
 
-	KOEF_SMOOTHNESS = 20;
+	KOEF_SMOOTHNESS = 50;
 	player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
 	sf::Text title, go_to_menu;
 	sf::Font font;
@@ -191,7 +200,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Escape) {
 					player_board.reset();
-					return PROCESS_STEPS::MAIN_MENU; }
+					return PROCESS_STEPS::GO_TO_MAIN_MENU; }
 			default:
 				break;
 			}
@@ -214,7 +223,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 	return PROCESS_STEPS::START_PLAYING;
 }
 
-PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
+PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win) {
 	player.reset_results();
 	do {
 		sf::Text title, go_to_menu;
@@ -255,7 +264,7 @@ PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 					if (event.key.code == sf::Keyboard::Escape) {
 						player.board().reset();
 						res = GAMING_RESULT::PLAYER_LOSE;
-						return PROCESS_STEPS::MAIN_MENU;
+						return PROCESS_STEPS::GO_TO_MAIN_MENU;
 					}
 				default:
 					break;
@@ -281,7 +290,7 @@ PROCESS_STEPS player_gaming(sf::RenderWindow& window, sf::RectangleShape& backgr
 	return PROCESS_STEPS::EXIT;
 }
 
-PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
+PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win) {
 
 	/*	sf::RectangleShape deck(sf::Vector2f(500, 500));
 		deck.setPosition(window.getSize().x / 2 - deck.getGlobalBounds().width/2, window.getSize().y / 2 - deck.getGlobalBounds().height / 2);
@@ -306,7 +315,7 @@ PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleSha
 		init_text(time_res, window.getSize().x / 2, window.getSize().y / 4, L"Время выполнения: " + (sf::String)player.get_strtime_res(), 50,
 			      sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 
-		Menu main_menu{ window,{L"Сыграть ещё раз", L"Настройки", L"Выход"} };
+		Menu main_menu{ window,{L"Сыграть ещё раз", L"В главное меню", L"Выход"} };
 
 		int menu_point_number = -1;
 		while (window.isOpen()) {
@@ -341,8 +350,8 @@ PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleSha
 			main_menu.draw(window);
 			window.display();
 			switch (menu_point_number) {
-			case 0: return PROCESS_STEPS::START_WITH_SHAFFLING;
-			case 1: return PROCESS_STEPS::GO_TO_OPTIONS;
+			case 0: return PROCESS_STEPS::START_PLAYING;
+			case 1: return PROCESS_STEPS::GO_TO_MAIN_MENU;
 			case 2: return PROCESS_STEPS::EXIT;
 			default:
 				break;
@@ -350,7 +359,7 @@ PROCESS_STEPS work_with_postgame_menu(sf::RenderWindow& window, sf::RectangleSha
 		}
 }
 
-PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAMING_RESULT& res) {
+PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win) {
 	Bot bot{ player.board() };
 	bot.board() = player.board();
 
@@ -403,7 +412,7 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 					if (event.key.code == sf::Keyboard::Escape) {
 						player.board().reset();
 						res = GAMING_RESULT::PLAYER_LOSE;
-						return PROCESS_STEPS::MAIN_MENU;
+						return PROCESS_STEPS::GO_TO_MAIN_MENU;
 					}
 				default:
 					break;
