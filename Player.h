@@ -19,8 +19,8 @@ public:
 	int get_moves() { return p_game_moves; }
 
 	void reset_results();
-	void set_fresult(float res) { p_res_ftime = res; };
-	void set_strresult(std::string& res) { p_res_strtime = res; }
+	void set_ftime_res(float res) { p_res_ftime = res; };
+	void set_strtime_res(std::string& res) { p_res_strtime = res; }
 	void new_move() { ++p_game_moves; }
 	Board& board() { return p_board; }
 };

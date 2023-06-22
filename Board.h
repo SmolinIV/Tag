@@ -30,7 +30,7 @@ public:
 	float get_board_height() const { return b_height; }
 	int get_board_side_size() { return b_side_size; }
 	void setPosition(float xpos, float ypos);
-
+	void set_smoothness(float koef);
 	void draw(sf::RenderWindow& window);
 	void draw(sf::RenderWindow& window, bool &need_move);
 
@@ -65,25 +65,6 @@ Board::Board(std::error_code& ec) : Board() {
 	} while (false);
 }
 
-//Board& Board::operator=(Board& other) {
-//	b_vert_bord = other.b_vert_bord;
-//	b_horiz_bord = other.b_horiz_bord;
-//	b_width = other.b_width;
-//	b_height = other.b_height;
-//	b_board = other.b_board;
-//	b_texture = other.b_texture;
-//	b_board_pos = other.b_board_pos;
-//	b_moving_cube = other.b_moving_cube;
-//	std::array<std::array<Cube, b_side_size>, b_side_size> b_cubes;
-//	b_empty_cube_pos = other.b_empty_cube_pos;
-//	b_last_swap_cube = other.b_last_swap_cube;
-//	for (int i = 0; i < b_side_size; i++) {
-//		for (int j = 0; j < b_side_size; j++) {
-//			b_cubes[i][j] = other.b_cubes[i][j];
-//		}
-//	}
-//	return *this;
-//}
 
 void Board::setPosition (float xpos, float ypos) {
 	b_board_pos = { xpos - b_board.getGlobalBounds().width / 2.0f, ypos - b_board.getGlobalBounds().height / 2.0f };
@@ -242,4 +223,13 @@ void Board::reset() {
 
 	b_empty_cube_pos = { 3,3 }; 
 	b_last_swap_cube = { 3,3 };
+}
+
+
+void Board::set_smoothness(float koef) {
+	for (int i = 0; i < b_side_size; i++) {
+		for (int j = 0; j < b_side_size; j++) {
+			b_cubes[i][j].set_smoothness(koef);
+		}
+	}
 }

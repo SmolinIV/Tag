@@ -5,10 +5,15 @@
 #define RGB_APRICOT 204, 120, 52
 #define RGB_LIGHT_BROWN 222, 150, 1
 
-int KOEF_SMOOTHNESS = 50; // Для эффекта отскока нужно число, которму не кратнен размер двигаемого объекта
 
-enum class DIRECTION
-{
+// Глобальные для удобства отладки, потом можно от них избавиться
+float koef_smoothness_shuffle = 50.0f,
+koef_smoothness_board = 5.0f,
+koef_smoothness_player = 20.0f,
+koef_smoothness_bot = 50.0f;
+
+
+enum class DIRECTION {
 	//Значения соответствуют кодам клавиш-стрелок
 	UP = 72,
 	DOWN = 80,
@@ -17,21 +22,20 @@ enum class DIRECTION
 	NON_DIR = 0
 };
 
-enum class PROCESS_STEPS
-{
-	GO_TO_MAIN_MENU,
-	START_SHAFFLING,
-	START_PLAYING,
-	START_PLAYING_WITH_BOT,
-	GO_TO_POSTGAME_MENU,
+enum class PROCESS_STEPS {
+	MAIN_MENU,
+	SHAFFLING,
+	SINGLE_PLAYER,
+	PLAYER_WITH_BOT,
+	POSTGAME_MENU,
 	RESTART_GAME,
 	EXIT,
 	NONE
 };
 
-
-//Задержка времени
-//sf::Clock clock;
-//float time = 0;
-//clock.restart();
-//while (time < 100) time = clock.getElapsedTime().asMilliseconds();
+enum class GAME_RESULT {
+	PLAYER_WIN,
+	PC_WIN,
+	PLAYER_GAVE_UP,
+	NONE
+};

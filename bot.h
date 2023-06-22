@@ -7,7 +7,6 @@ class Bot {
 private:
 	Board b_board;
 	float b_res_ftime;
-	std::string b_res_strtime;
 	int b_side_size;
 	int b_game_moves;
 	struct AUXILIARY_VARIABLES {
@@ -84,12 +83,10 @@ public:
 
 	float get_ftime_res() const { return b_res_ftime; }
 	bool* get_permit_to_move() { return &b_is_moving; }
-	const std::string& get_strtime_res() const { return b_res_strtime; }
 	int get_moves() { return b_game_moves; }
 
 	void reset_results();
-	void set_fresult(float res) { b_res_ftime = res; };
-	void set_strresult(std::string& res) { b_res_strtime = res; }
+	void set_ftime_res(float res) { b_res_ftime = res; };
 	void new_move() { ++b_game_moves; }
 	Board& board() { return b_board; }
 	bool assemble_done() { return b_assemble_done; }
@@ -99,7 +96,6 @@ public:
 
 Bot::Bot() :
 	b_res_ftime(0),
-	b_res_strtime{ "00:00" },
 	b_game_moves(0),
 	b_side_size(0),
 	b_assemble_done(false),
@@ -119,7 +115,6 @@ Bot::Bot(Board& board) :
 // —брос метрик бота
 void Bot::reset_results() {
 	b_res_ftime = 0;
-	b_res_strtime = { "00:00" };
 	b_game_moves = 0;
 }
 

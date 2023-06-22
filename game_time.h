@@ -43,13 +43,16 @@ Game_time::Game_time(std::error_code& syst_error) {
 			break;
 		}
 		gt_time_in_text.setFont(gt_font);
-		gt_time_in_text.setCharacterSize(60);
+		gt_strtime = "00:00";
 		init_time();
+		init_text();
+
+		/*gt_time_in_text.setCharacterSize(60);
 		gt_time_in_text.setString("00:00");
 		gt_time_in_text.setFillColor(sf::Color(RGB_APRICOT));
 		gt_time_in_text.setOutlineThickness(3);
 		gt_time_in_text.setOutlineColor(sf::Color(RGB_DARK_BROWN));
-		gt_time_in_text.setPosition(gt_position);
+		gt_time_in_text.setPosition(gt_position);*/
 	} while (false);
 }
 

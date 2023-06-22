@@ -10,6 +10,7 @@ private:
 	sf::Vector2f c_current_pos;
 	sf::Vector2f c_new_pos;
 	int c_cube_value;
+	float c_koef_smoothness;
 	sf::RectangleShape c_cube;
 	sf::Texture c_texture;
 	sf::Text c_number;
@@ -25,6 +26,7 @@ public:
 	void set_position(float x, float y) { c_current_pos = { x,y }; }
 	void draw(sf::RenderWindow& window);
 	void change_pos(DIRECTION dir);
+	void set_smoothness(float koef) { c_koef_smoothness = koef; }
 
 	void moving_cube(bool& need_move);
 
@@ -34,6 +36,7 @@ public:
 
 Cube::Cube() {
 	c_cube_value = 0;
+	c_koef_smoothness = 20;
 	c_current_pos = { 0,0 };
 	c_new_pos = { 0,0 };
 	c_cube.setSize(sf::Vector2f(0.0f, 0.0f));
@@ -97,7 +100,7 @@ void Cube::moving_cube(bool& need_move) {
 	switch (c_dir) {
 	case DIRECTION::UP:
 		if (c_current_pos.y > c_new_pos.y) {
-			c_current_pos.y -= KOEF_SMOOTHNESS;
+			c_current_pos.y -= c_koef_smoothness;
 		}
 		else {
 			c_current_pos = c_new_pos;
@@ -106,7 +109,7 @@ void Cube::moving_cube(bool& need_move) {
 		break;
 	case DIRECTION::DOWN:
 		if (c_current_pos.y < c_new_pos.y) {
-			c_current_pos.y+= KOEF_SMOOTHNESS;
+			c_current_pos.y+= c_koef_smoothness;
 		}
 		else {
 			c_current_pos = c_new_pos;
@@ -115,7 +118,7 @@ void Cube::moving_cube(bool& need_move) {
 		break;
 	case DIRECTION::LEFT:
 		if (c_current_pos.x > c_new_pos.x) {
-			c_current_pos.x -= KOEF_SMOOTHNESS;
+			c_current_pos.x -= c_koef_smoothness;
 		}
 		else {
 			c_current_pos = c_new_pos;
@@ -124,7 +127,7 @@ void Cube::moving_cube(bool& need_move) {
 		break;
 	case DIRECTION::RIGHT:
 		if (c_current_pos.x < c_new_pos.x) {
-			c_current_pos.x += KOEF_SMOOTHNESS;
+			c_current_pos.x += c_koef_smoothness;
 		}
 		else {
 			c_current_pos = c_new_pos;

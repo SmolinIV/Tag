@@ -16,10 +16,10 @@ void init_text(sf::Text& text, float xpos, float ypos, sf::String str, int size_
 	sf::Color menu_text_color = sf::Color(RGB_APRICOT), int bord = 3, sf::Color border_color = sf::Color(RGB_DARK_BROWN));
 
 PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background, std::error_code& syst_error);
-PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win);
+PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAME_RESULT& game_res);
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error);
-PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win);
-PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win);
+PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAME_RESULT& game_res);
+PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAME_RESULT& game_res);
 
 void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, Bot& bot);
 
@@ -45,47 +45,51 @@ int main()
 		if (!texture_background.loadFromFile("png/bg2.png")) { syst_error = std::make_error_code(std::errc::no_such_file_or_directory); break; }
 		background.setTexture(&texture_background);
 
+		sf::Image icon;
+		if (!icon.loadFromFile("png/m_cube_15.png")) { syst_error = std::make_error_code(std::errc::no_such_file_or_directory); break; }
+		window.setIcon(32, 32, icon.getPixelsPtr());
+
 		Board player_board(syst_error);
 		if (syst_error) { break; }
 
 		Player player(player_board);
 
-		PROCESS_STEPS next_step = PROCESS_STEPS::GO_TO_MAIN_MENU;
+		PROCESS_STEPS next_step = PROCESS_STEPS::MAIN_MENU;
 		PROCESS_STEPS last_game = PROCESS_STEPS::NONE;
-		bool player_win = false;
+		GAME_RESULT game_res = GAME_RESULT::NONE;
 		do {
 			switch (next_step)
 			{
-			case PROCESS_STEPS::GO_TO_MAIN_MENU:
+			case PROCESS_STEPS::MAIN_MENU:
 				next_step = main_menu(window, background, syst_error);
 				last_game = next_step;
 				break;
 
-			case PROCESS_STEPS::START_SHAFFLING:
+			case PROCESS_STEPS::SHAFFLING:
 				next_step = shuffle_board(window, background, player.board(), syst_error);
 				break;
 
-			case PROCESS_STEPS::GO_TO_POSTGAME_MENU:
-				next_step = postgame_menu(window, background, player, syst_error, player_win);
+			case PROCESS_STEPS::POSTGAME_MENU:
+				next_step = postgame_menu(window, background, player, syst_error, game_res);
 				if (next_step == PROCESS_STEPS::RESTART_GAME) {
 					next_step = last_game;
 				}
 				break;
 
-			case PROCESS_STEPS::START_PLAYING:
+			case PROCESS_STEPS::SINGLE_PLAYER:
 				next_step = shuffle_board(window, background, player.board(), syst_error);
-				if (next_step != PROCESS_STEPS::START_PLAYING) {
+				if (next_step != PROCESS_STEPS::SINGLE_PLAYER) {
 					break;
 				}
-				next_step = single_player(window, background, player, syst_error, player_win);
+				next_step = single_player(window, background, player, syst_error, game_res);
 				break;
 
-			case PROCESS_STEPS::START_PLAYING_WITH_BOT:
+			case PROCESS_STEPS::PLAYER_WITH_BOT:
 				next_step = shuffle_board(window, background, player.board(), syst_error);
-				if (next_step != PROCESS_STEPS::START_PLAYING) {
+				if (next_step != PROCESS_STEPS::SINGLE_PLAYER) {
 					break;
 				}
-				next_step = player_vs_bot(window, background, player, syst_error, player_win);
+				next_step = player_vs_bot(window, background, player, syst_error, game_res);
 				break;
 			case PROCESS_STEPS::EXIT:
 				next_step = PROCESS_STEPS::EXIT;
@@ -145,7 +149,14 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 				case sf::Keyboard::Enter:
 					menu_point_number = main_menu.selected();
 				}
+			case sf::Event::MouseMoved:
+				break;
+			case sf::Event::MouseButtonPressed:
+				if (event.key.code == sf::Mouse::Left) {
+					sf::Vector2i click_pos = sf::Mouse::getPosition(window);
 
+				}
+				break;
 			default:
 				break;
 			}
@@ -156,8 +167,8 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 		main_menu.draw(window);
 		window.display();
 		switch (menu_point_number) {
-		case 0: return PROCESS_STEPS::START_PLAYING;
-		case 1: return PROCESS_STEPS::START_PLAYING_WITH_BOT; 
+		case 0: return PROCESS_STEPS::SINGLE_PLAYER;
+		case 1: return PROCESS_STEPS::PLAYER_WITH_BOT; 
 		case 2: return PROCESS_STEPS::EXIT;
 		default:
 			break;
@@ -167,8 +178,11 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
 
-	KOEF_SMOOTHNESS = 50;
+	Game_time shuffle_time(syst_error);
+	if (syst_error) { return PROCESS_STEPS::EXIT; }
+
 	player_board.setPosition(window.getSize().x / 2, window.getSize().y / 2);
+	player_board.set_smoothness(koef_smoothness_shuffle);
 	sf::Text title, go_to_menu;
 	sf::Font font;
 	if (!font.loadFromFile("font/troika.otf")) {
@@ -183,9 +197,10 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 	bool is_moving = false;
 	int shuffle_steps = 0;
 	int number_of_swap = 60;
-	while (window.isOpen() && shuffle_steps < number_of_swap) {
-		if (shuffle_steps >= number_of_swap / 2 && (number_of_swap - shuffle_steps) % 10 == 0) {
-			init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, std::to_string((number_of_swap - shuffle_steps) / 10) + "...", 80);
+	while (window.isOpen() && shuffle_time.get_ftime() < 5.0f) {
+		shuffle_time.init_time();
+		if (shuffle_time.get_ftime() > 2.0f && shuffle_time.get_ftime() < 5.0f) {
+			init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, std::to_string(5 - (int)shuffle_time.get_ftime()) + "...", 80);
 		}
 
 		// Обработка действий
@@ -200,7 +215,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Escape) {
 					player_board.reset();
-					return PROCESS_STEPS::GO_TO_MAIN_MENU; }
+					return PROCESS_STEPS::MAIN_MENU; }
 			default:
 				break;
 			}
@@ -214,18 +229,18 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 			window.display();
 		} while (is_moving);
 		++shuffle_steps;
-		if (shuffle_steps < number_of_swap) {
+		if (shuffle_time.get_ftime() < 5.0f) {
 			player_board.shaffle_board(window);
 		}
 		is_moving = true;
 	}
-	KOEF_SMOOTHNESS = 10;
-	return PROCESS_STEPS::START_PLAYING;
+	return PROCESS_STEPS::SINGLE_PLAYER;
 }
 
-PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win) {
-	player.reset_results();
+PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAME_RESULT& game_res) {
 	do {
+		player.reset_results();
+		player.board().set_smoothness(koef_smoothness_player);
 		sf::Text title, go_to_menu;
 		sf::Font font;
 		if (!font.loadFromFile("font/troika.otf")) {
@@ -233,7 +248,7 @@ PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& backgr
 			return PROCESS_STEPS::EXIT;
 		}
 		title.setFont(font);
-		init_text(title, window.getSize().x / 2, window.getSize().y / 8, L"Начали!", 80);
+		init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, L"Начали!", 80);
 		go_to_menu.setFont(font);
 		init_text(go_to_menu, window.getSize().x / 2, window.getSize().y * 0.81f, L"Для возврата в главное меню нажмите ESC", 20);
 
@@ -263,8 +278,10 @@ PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& backgr
 				case sf::Event::KeyPressed:
 					if (event.key.code == sf::Keyboard::Escape) {
 						player.board().reset();
-						res = GAMING_RESULT::PLAYER_LOSE;
-						return PROCESS_STEPS::GO_TO_MAIN_MENU;
+						game_res = GAME_RESULT::PLAYER_GAVE_UP;
+						player.set_ftime_res(running_time.get_ftime());
+						player.set_strtime_res(running_time.get_strtime());
+						return PROCESS_STEPS::POSTGAME_MENU;
 					}
 				default:
 					break;
@@ -280,26 +297,17 @@ PROCESS_STEPS single_player(sf::RenderWindow& window, sf::RectangleShape& backgr
 				window.display();
 			} while (is_moving);
 			if (player.board().sequence_restored()) {
-				res = GAMING_RESULT::PC_WIN;
-				player.set_fresult(running_time.get_ftime());
-				player.set_strresult(running_time.get_strtime());
-				return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
+				game_res = GAME_RESULT::PLAYER_WIN;
+				player.set_ftime_res(running_time.get_ftime());
+				player.set_strtime_res(running_time.get_strtime());
+				return PROCESS_STEPS::POSTGAME_MENU;
 			}
 		}
 	} while (false);
 	return PROCESS_STEPS::EXIT;
 }
 
-PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win) {
-
-	/*	sf::RectangleShape deck(sf::Vector2f(500, 500));
-		deck.setPosition(window.getSize().x / 2 - deck.getGlobalBounds().width/2, window.getSize().y / 2 - deck.getGlobalBounds().height / 2);
-		sf::Texture deck_texture;
-		if (!deck_texture.loadFromFile("png/ended_deck1.png")) { 
-			syst_error = std::make_error_code(std::errc::no_such_file_or_directory); 
-			return PROCESS_STEPS::EXIT;
-		}
-		deck.setTexture(&deck_texture);*/
+PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAME_RESULT& game_res) {
 
 		//Шрифт для результата игры
 		sf::Text result, time_res;
@@ -310,12 +318,30 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 
 		result.setFont(font);
 		time_res.setFont(font);
-		
-		init_text(result, window.getSize().x / 2, window.getSize().y / 7, L"Победа!", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
-		init_text(time_res, window.getSize().x / 2, window.getSize().y / 4, L"Время выполнения: " + (sf::String)player.get_strtime_res(), 50,
-			      sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 
-		Menu main_menu{ window,{L"Сыграть ещё раз", L"В главное меню", L"Выход"} };
+		sf::String res_message; 
+		switch (game_res)
+		{
+		case GAME_RESULT::PLAYER_WIN:
+			res_message = L"Вы победили!";
+			break;
+		case GAME_RESULT::PC_WIN:
+			res_message = L"Компьютер победил!";
+			break;
+		case GAME_RESULT::PLAYER_GAVE_UP:
+			res_message = L"Попробуйте ещё раз!";
+			break;
+		default:
+			break;
+		}	
+
+		init_text(result, window.getSize().x / 2, window.getSize().y / 7, res_message, 80, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
+		if (game_res != GAME_RESULT::PLAYER_GAVE_UP) {
+			init_text(time_res, window.getSize().x / 2, window.getSize().y / 4, L"Затраченное время: " + (sf::String)player.get_strtime_res(), 40,
+				sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
+		}
+
+		Menu main_menu{ window,{L"Сыграть еще раз", L"На главную", L"Выход"} };
 
 		int menu_point_number = -1;
 		while (window.isOpen()) {
@@ -350,8 +376,8 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 			main_menu.draw(window);
 			window.display();
 			switch (menu_point_number) {
-			case 0: return PROCESS_STEPS::START_PLAYING;
-			case 1: return PROCESS_STEPS::GO_TO_MAIN_MENU;
+			case 0: return PROCESS_STEPS::RESTART_GAME;
+			case 1: return PROCESS_STEPS::MAIN_MENU;
 			case 2: return PROCESS_STEPS::EXIT;
 			default:
 				break;
@@ -359,7 +385,7 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 		}
 }
 
-PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, bool& player_win) {
+PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& background, Player& player, std::error_code& syst_error, GAME_RESULT& game_res) {
 	Bot bot{ player.board() };
 	bot.board() = player.board();
 
@@ -367,6 +393,10 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 	bot.reset_results();
 	move_boards_apart(window, background, player, bot);
 	bot.set_start_pos();
+
+	player.board().set_smoothness(koef_smoothness_player);
+	bot.board().set_smoothness(koef_smoothness_bot);
+
 	do {
 		sf::Text title, go_to_menu, player_title, bot_title;
 		sf::Font font;
@@ -375,17 +405,15 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 			return PROCESS_STEPS::EXIT;
 		}
 		title.setFont(font);
-		init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, L"Начали!", 80);
+		player_title.setFont(font);
+		bot_title.setFont(font);
 		go_to_menu.setFont(font);
+		init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, L"Начали!", 80);
+		init_text(player_title, window.getSize().x *0.25f, window.getSize().y * 0.17f, L"Вы", 50);
+		init_text(bot_title, window.getSize().x * 0.75f, window.getSize().y * 0.17f, L"Компьютер", 50);
 		init_text(go_to_menu, window.getSize().x / 2, window.getSize().y * 0.81f, L"Для возврата в главное меню нажмите ESC", 20);
 
-		player_title.setFont(font);
-		init_text(player_title, window.getSize().x *0.25f, window.getSize().y * 0.17f, L"Вы", 50);
-		bot_title.setFont(font);
-		init_text(bot_title, window.getSize().x * 0.75f, window.getSize().y * 0.17f, L"Компьютер", 50);
 		
-		
-
 		Game_time running_time(syst_error);
 		if (syst_error) { return PROCESS_STEPS::EXIT; }
 		running_time.set_position(window.getSize().x - 200, 30);
@@ -411,8 +439,10 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 				case sf::Event::KeyPressed:
 					if (event.key.code == sf::Keyboard::Escape) {
 						player.board().reset();
-						res = GAMING_RESULT::PLAYER_LOSE;
-						return PROCESS_STEPS::GO_TO_MAIN_MENU;
+						game_res = GAME_RESULT::PLAYER_GAVE_UP;
+						player.set_ftime_res(running_time.get_ftime());
+						player.set_strtime_res(running_time.get_strtime());
+						return PROCESS_STEPS::POSTGAME_MENU;
 					}
 				default:
 					break;
@@ -432,11 +462,19 @@ PROCESS_STEPS player_vs_bot(sf::RenderWindow& window, sf::RectangleShape& backgr
 						window.draw(go_to_menu);
 						window.display();
 					} while (is_moving);
-					if (player.board().sequence_restored()) {
-						res = GAMING_RESULT::PC_WIN;
-						player.set_fresult(running_time.get_ftime());
-						player.set_strresult(running_time.get_strtime());
-						return PROCESS_STEPS::GO_TO_POSTGAME_MENU;
+					if (bot.assemble_done() && bot.get_ftime_res() < 1) { // Меньше 1, а не ==0, чтобы избежать проблем со сравнением чисел с плавающей запятой
+						bot.set_ftime_res(running_time.get_ftime());
+					}
+					if (player.board().sequence_restored()) { // Ничья исключена :)
+						if (bot.assemble_done()) { 
+							game_res = GAME_RESULT::PC_WIN;
+						}
+						else {	
+							game_res = GAME_RESULT::PLAYER_WIN;
+						} 
+						player.set_ftime_res(running_time.get_ftime());
+						player.set_strtime_res(running_time.get_strtime());
+						return PROCESS_STEPS::POSTGAME_MENU;
 					}
 				//}
 			
@@ -473,8 +511,8 @@ void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background,
 			}
 		}
 
-		if (xpos_player - KOEF_SMOOTHNESS > needed_xpos_player) {
-			xpos_player -= KOEF_SMOOTHNESS;
+		if (xpos_player - koef_smoothness_board > needed_xpos_player) {
+			xpos_player -= koef_smoothness_board;
 			player.board().setPosition(xpos_player,ypos_player);
 		}
 		else {
@@ -482,8 +520,8 @@ void move_boards_apart(sf::RenderWindow& window, sf::RectangleShape& background,
 			player_board_in_place = true;
 		}
 
-		if (xpos_bot + KOEF_SMOOTHNESS < needed_xpos_bot) {
-			xpos_bot += KOEF_SMOOTHNESS;
+		if (xpos_bot + koef_smoothness_board < needed_xpos_bot) {
+			xpos_bot += koef_smoothness_board;
 			bot.board().setPosition(xpos_bot, ypos_bot);
 		}
 		else {

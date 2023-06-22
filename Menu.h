@@ -31,6 +31,7 @@ public:
 
 	int selected();
 
+	PROCESS_STEPS mouse_hover();
 
 	~Menu() {}
 };
