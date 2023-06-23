@@ -1,4 +1,8 @@
-#pragma once
+//#pragma once
+#ifndef CONSTANTS
+
+#define CONSTANTS
+
 
 #define RGB_BEIGE 245,245,220
 #define RGB_DARK_BROWN 53,23,12
@@ -7,7 +11,7 @@
 
 
 // Глобальные для удобства отладки, потом можно от них избавиться
-float koef_smoothness_shuffle = 50.0f,
+const float koef_smoothness_shuffle = 50.0f,
 koef_smoothness_board = 5.0f,
 koef_smoothness_player = 20.0f,
 koef_smoothness_bot = 10.0f;
@@ -39,3 +43,5 @@ enum class GAME_RESULT {
 	PLAYER_GAVE_UP,
 	NONE
 };
+
+#endif // !CONSTANTS
