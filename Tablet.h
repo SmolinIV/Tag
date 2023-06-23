@@ -20,6 +20,8 @@ public:
 
 	void change_color(sf::Color color);
 
+	sf::Vector2f get_pos() { return t_tablet_pos; }
+	sf::Vector2f get_size() { return t_tablet_size; }
 	void pressed();
 
 };

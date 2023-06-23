@@ -127,7 +127,7 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 	}
 	title.setFont(font);
 	init_text(title, window.getSize().x / 2, window.getSize().y / 6, L"Пятнашки", 100, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
-
+	sf::Vector2i moving_pos{0, 0}, click_pos{ 0,0 };
 	Menu main_menu{ window,{L"Одиночная игра", L"Бой с компьютером", L"Выход"} };
 	int menu_point_number = -1;
 	while (window.isOpen()) { 
@@ -150,11 +150,13 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 					menu_point_number = main_menu.selected();
 				}
 			case sf::Event::MouseMoved:
+				moving_pos = sf::Mouse::getPosition(window);
+				main_menu.menu_navigating(moving_pos);
 				break;
 			case sf::Event::MouseButtonPressed:
 				if (event.key.code == sf::Mouse::Left) {
-					sf::Vector2i click_pos = sf::Mouse::getPosition(window);
-
+					click_pos = sf::Mouse::getPosition(window);
+					menu_point_number = main_menu.click_point(click_pos);
 				}
 				break;
 			default:
@@ -195,12 +197,11 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 	go_to_menu.setFont(font);
 	init_text(go_to_menu, window.getSize().x / 2, window.getSize().y * 0.81f, L"Для возврата в главное меню нажмите ESC", 20);
 	bool is_moving = false;
-	int shuffle_steps = 0;
-	int number_of_swap = 60;
-	while (window.isOpen() && shuffle_time.get_ftime() < 5.0f) {
+	float time_for_shuffle = 4.0f;
+	while (window.isOpen() && shuffle_time.get_ftime() < time_for_shuffle) {
 		shuffle_time.init_time();
-		if (shuffle_time.get_ftime() > 2.0f && shuffle_time.get_ftime() < 5.0f) {
-			init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, std::to_string(5 - (int)shuffle_time.get_ftime()) + "...", 80);
+		if (time_for_shuffle - shuffle_time.get_ftime() < 3.0f  && shuffle_time.get_ftime() < time_for_shuffle) {
+			init_text(title, window.getSize().x / 2, window.getSize().y * 0.09f, std::to_string((int)(time_for_shuffle - shuffle_time.get_ftime()) + 1) + "...", 80);
 		}
 
 		// Обработка действий
@@ -228,8 +229,7 @@ PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& backgr
 			player_board.draw(window, is_moving);	//is_moving обнуляется внутри функции
 			window.display();
 		} while (is_moving);
-		++shuffle_steps;
-		if (shuffle_time.get_ftime() < 5.0f) {
+		if (shuffle_time.get_ftime() < time_for_shuffle) {
 			player_board.shaffle_board(window);
 		}
 		is_moving = true;
@@ -342,6 +342,7 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 		}
 
 		Menu main_menu{ window,{L"Сыграть еще раз", L"На главную", L"Выход"} };
+		sf::Vector2i moving_pos{0, 0}, click_pos{ 0,0 };
 
 		int menu_point_number = -1;
 		while (window.isOpen()) {
@@ -363,6 +364,16 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 					case sf::Keyboard::Enter:
 						menu_point_number = main_menu.selected();
 					}
+				case sf::Event::MouseMoved:
+					moving_pos = sf::Mouse::getPosition(window);
+					main_menu.menu_navigating(moving_pos);
+					break;
+				case sf::Event::MouseButtonPressed:
+					if (event.key.code == sf::Mouse::Left) {
+						click_pos = sf::Mouse::getPosition(window);
+						menu_point_number = main_menu.click_point(click_pos);
+					}
+					break;
 
 				default:
 					break;

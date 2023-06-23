@@ -23,7 +23,6 @@ public:
 	
 	void draw(sf::RenderWindow& window);
 
-	void menu_navigating();
 
 	void move_up();
 
@@ -31,9 +30,13 @@ public:
 
 	int selected();
 
-	PROCESS_STEPS mouse_hover();
+	void menu_navigating(sf::Vector2i click_pos);
+
+	int click_point(sf::Vector2i click_pos);
 
 	~Menu() {}
+
+
 };
 
 Menu::Menu(sf::RenderWindow& window, std::initializer_list <sf::String> list) {
@@ -90,3 +93,34 @@ void Menu::move_down() {
 int Menu::selected() {
 	return selected_point;
 }
+
+void Menu::menu_navigating(sf::Vector2i click_pos) {
+
+	if (click_pos.x < m_menu[0]->get_pos().x || click_pos.x > m_menu[0]->get_pos().x + m_menu[0]->get_size().x ||
+		click_pos.y < m_menu[0]->get_pos().y || click_pos.y > m_menu[m_menu.size() - 1]->get_pos().y + m_menu[0]->get_size().y) {
+		return;
+	}
+
+	for (int i = 0; i < m_menu.size(); i++) {
+		if (click_pos.y >= m_menu[i]->get_pos().y && click_pos.y <= m_menu[i]->get_pos().y + m_menu[i]->get_size().y) {
+			m_menu[i]->change_color(sf::Color(RGB_LIGHT_BROWN));
+			selected_point = i;
+			for (int j = 0; j < m_menu.size(); j++) {
+				if (j != i) {
+					m_menu[j]->change_color(sf::Color(RGB_BEIGE));
+				}
+			}
+			return;
+		}
+	}
+
+}
+
+	int Menu::click_point(sf::Vector2i click_pos) {
+		if (click_pos.x >= m_menu[selected_point]->get_size().x && click_pos.x <= m_menu[selected_point]->get_pos().x + m_menu[0]->get_size().x &&
+			click_pos.y >= m_menu[selected_point]->get_pos().y || click_pos.y <= m_menu[selected_point]->get_pos().y + m_menu[0]->get_size().y) {
+			return selected_point;
+		}
+
+		return -1;
+	}

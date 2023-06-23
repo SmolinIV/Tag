@@ -10,7 +10,7 @@
 float koef_smoothness_shuffle = 50.0f,
 koef_smoothness_board = 5.0f,
 koef_smoothness_player = 20.0f,
-koef_smoothness_bot = 50.0f;
+koef_smoothness_bot = 10.0f;
 
 
 enum class DIRECTION {
