@@ -52,7 +52,7 @@ void Menu::move_down() {
 
 }
 
-int Menu::selected() {
+int Menu::get_selected() {
 	return selected_point;
 }
 

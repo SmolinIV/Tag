@@ -13,14 +13,20 @@ private:
 public:
 	Player();
 	Player(Board &board);
-
-	float get_ftime_res() const;
-	const std::string& get_strtime_res() const;
-	int get_moves();
-
+	// Получить результат по времени в секундах
+	float get_ftime_res() const { return p_res_ftime; }
+	// Получить результат в строковом виде в формате ЧЧ:ММ:СС
+	const std::string& get_strtime_res() const { return p_res_strtime; }
+	//Получить количество ходов игрока
+	int get_moves() { return p_game_moves; }
+	// Изменить результат по времени в секундах
+	void set_ftime_res(float res) { p_res_ftime = res; };
+	// Изменить результат по времени в строковом виде в формате ЧЧ:ММ:СС
+	void set_strtime_res(std::string& res) { p_res_strtime = res; }
+	// Интератор ходов игрока
+	void new_move() { ++p_game_moves; }
+	// Получить доступ к игровому полю игрока
+	Board& board() { return p_board; }
+	// Сбросить результаты игрока
 	void reset_results();
-	void set_ftime_res(float res);
-	void set_strtime_res(std::string& res);
-	void new_move();
-	Board& board();
 };

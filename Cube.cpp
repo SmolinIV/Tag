@@ -28,14 +28,13 @@ Cube::Cube(int i) : Cube() {
 
 void Cube::draw(sf::RenderWindow& window) {
 	c_cube.setPosition(c_current_pos);
-
+	
 	c_number.setPosition(sf::Vector2f(c_current_pos.x + c_side / 2 - c_number.getGlobalBounds().width / 2,
 		c_current_pos.y + c_side / 2 - c_number.getGlobalBounds().height));
 
 	window.draw(c_cube);
 	window.draw(c_number);
 }
-
 
 void Cube::change_pos(DIRECTION dir) {
 	c_new_pos = c_current_pos;
@@ -54,15 +53,15 @@ void Cube::change_pos(DIRECTION dir) {
 		c_new_pos.x += c_side;
 		break;
 	}
-	if (c_cube_value == 0) {
+	if (c_cube_value == 0) { // ѕустое пространство не имет текстуры, поэтому сразу без анимации занимает нужное поолжение
 		c_current_pos = c_new_pos;
 		c_dir = DIRECTION::NON_DIR;
 	}
 
 }
 
-void Cube::moving_cube(bool& need_move) {
-
+void Cube::moving_cube(bool& need_move) { 
+	
 	switch (c_dir) {
 	case DIRECTION::UP:
 		if (c_current_pos.y > c_new_pos.y) {

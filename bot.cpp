@@ -62,7 +62,23 @@ void Bot::search_cubes_and_pos() {
 
 	b_assemble_done = true;
 }
+// Функция оптимизирована только под последние две строки.
+void Bot::search_certain_cube_and_pos() {
 
+	cp_home_pos.i = (b_req_cube_value - 1) / b_side_size;
+	cp_home_pos.j = b_req_cube_value - (cp_home_pos.i * b_side_size) - 1;
+
+	if (b_board(cp_req_cube_pos.i, cp_req_cube_pos.j) != b_req_cube_value) {
+		for (int i = b_side_size - 2; i < b_side_size; i++) {
+			for (int j = 0; j < b_side_size; j++) {
+				if (b_board(i, j) == b_req_cube_value) {
+					cp_req_cube_pos = { i,j };
+					return;
+				}
+			}
+		}
+	}
+}
 
 void Bot::assemble_board(sf::RenderWindow& window) {
 
@@ -133,6 +149,7 @@ void Bot::assemble_board(sf::RenderWindow& window) {
 	if (cp_home_pos.i < b_side_size - 2) {
 		if (cp_home_pos.j < b_side_size - 1) {
 			b_stage = STAGE::ASSEMBLE_ROW;
+			b_av.stage_step = 1;
 			assemble_row_exept_last_cube(window);
 		}
 		else {
@@ -191,6 +208,44 @@ void Bot::move_empty_right(sf::RenderWindow& window) {
 		b_is_moving = true;
 	}
 }
+void Bot::placed_empty_under_req(sf::RenderWindow& window) {
+
+	if (cp_empty_pos.i <= cp_req_cube_pos.i) {
+		move_empty_down(window);
+	}
+	else {
+		move_empty_right(window);
+	}
+
+	if (cp_empty_pos.j == cp_req_cube_pos.j) {
+		b_moving_method = MOVING_METHOD::NONE;
+	}
+	else {
+		b_moving_method = MOVING_METHOD::EMPTY_UNDER_REQ;
+	}
+}
+void Bot::place_empty_on_right_of_req(sf::RenderWindow& window) {
+	if (cp_empty_pos.j > cp_home_pos.j - 1) {
+		move_empty_left(window);
+	}
+	else if (cp_empty_pos.j < cp_home_pos.j - 1) {
+		move_empty_right(window);
+	}
+	else if (cp_empty_pos.i > cp_home_pos.i) {
+		move_empty_up(window);
+	}
+	else if (cp_empty_pos.i < cp_home_pos.i) {
+		move_empty_down(window);
+	}
+
+	if (cp_empty_pos.i == cp_home_pos.i && cp_empty_pos.j == cp_home_pos.j - 1) {
+		b_moving_method = MOVING_METHOD::NONE;
+	}
+	else {
+		b_moving_method = MOVING_METHOD::EMPTY_ON_RIGHT_FROM_REQ;
+	}
+}
+
 void Bot::move_req_left_to_pos(sf::RenderWindow& window) {
 
 	if (cp_empty_pos.j < cp_req_cube_pos.j) {
@@ -300,44 +355,74 @@ void Bot::move_req_up_to_pos(sf::RenderWindow& window) {
 		b_moving_method = MOVING_METHOD::REQ_UP_TO_POS;
 	}
 }
-void Bot::placed_empty_under_req(sf::RenderWindow& window) {
 
-	if (cp_empty_pos.i <= cp_req_cube_pos.i) {
-		move_empty_down(window);
-	}
-	else {
-		move_empty_right(window);
+void Bot::assemble_row_exept_last_cube(sf::RenderWindow& window) {
+
+	if (cp_req_cube_pos == cp_home_pos) {
+		b_stage = STAGE::NONE;
+		return;
 	}
 
-	if (cp_empty_pos.j == cp_req_cube_pos.j) {
-		b_moving_method = MOVING_METHOD::NONE;
-	}
-	else {
-		b_moving_method = MOVING_METHOD::EMPTY_UNDER_REQ;
+	while (true) {
+		switch (b_av.stage_step) {
+		case 1: // Определяем положение пустой клетки и, если нужный кубик не в том же ряду справа - спускаемся вниз, чтобы не сломать собранную часть
+			++b_av.stage_step;
+			if (cp_empty_pos.i <= cp_home_pos.i) {
+				if (cp_empty_pos.j < cp_req_cube_pos.j) {
+					b_moving_method = MOVING_METHOD::REQ_LEFT_TO_POS;
+					move_req_left_to_pos(window);
+				}
+				else {
+					move_empty_down(window);
+				}
+				return;
+			}
+		case 2: // Определяем, где искомый кубик
+			if (cp_req_cube_pos.j < cp_home_pos.j) {
+				b_av.stage_step = 3;
+			}
+			else if (cp_req_cube_pos.j > cp_home_pos.j) {
+				b_av.stage_step = 4;
+			}
+			else {
+				b_av.stage_step = 5;
+			}
+			break;
+		case 3: // Если левее - двигаем вправо.
+			b_av.stage_step = 5;
+			b_moving_method = MOVING_METHOD::REQ_RIGHT_TO_POS;
+			move_req_right_to_pos(window);
+			return;
+		case 4: // Если правее - двигаем влево. Предварительно проверяем положение пустой клетки, чтобы не нарушить уже собранный ряд
+			if (cp_req_cube_pos.i == cp_home_pos.i && (cp_req_cube_pos.j - cp_empty_pos.j) > 1) {
+				move_empty_right(window);
+				return;
+			}
+			else {
+				b_moving_method = MOVING_METHOD::REQ_LEFT_TO_POS;
+				move_req_left_to_pos(window);
+				b_av.stage_step = 5;
+				return;
+			}
+		case 5: // Если в одном столбце - двигаем вверх (опять же с проверкой)
+			if (cp_empty_pos.j < cp_req_cube_pos.j && cp_req_cube_pos.i - cp_home_pos.i < 2) {
+				b_moving_method = MOVING_METHOD::EMPTY_UNDER_REQ;
+				placed_empty_under_req(window);
+				return;
+			}
+			else {
+				b_moving_method = MOVING_METHOD::REQ_UP_TO_POS;
+				move_req_up_to_pos(window);
+				++b_av.stage_step;
+				b_stage = STAGE::NONE;
+				return;
+			}
+		default:
+			b_stage = STAGE::NONE;
+			return;
+		}
 	}
 }
-void Bot::place_empty_on_right_of_req(sf::RenderWindow& window) {
-	if (cp_empty_pos.j > cp_home_pos.j - 1) {
-		move_empty_left(window);
-	}
-	else if (cp_empty_pos.j < cp_home_pos.j - 1) {
-		move_empty_right(window);
-	}
-	else if (cp_empty_pos.i > cp_home_pos.i) {
-		move_empty_up(window);
-	}
-	else if (cp_empty_pos.i < cp_home_pos.i) {
-		move_empty_down(window);
-	}
-
-	if (cp_empty_pos.i == cp_home_pos.i && cp_empty_pos.j == cp_home_pos.j - 1) {
-		b_moving_method = MOVING_METHOD::NONE;
-	}
-	else {
-		b_moving_method = MOVING_METHOD::EMPTY_ON_RIGHT_FROM_REQ;
-	}
-}
-
 void Bot::placed_last_cube(sf::RenderWindow& window) {
 	bool go_to_next_step = false;
 
@@ -388,215 +473,6 @@ void Bot::placed_last_cube(sf::RenderWindow& window) {
 		b_stage = STAGE::NONE;
 	}
 }
-
-void Bot::middle_circle_movement(sf::RenderWindow& window) {
-	switch (b_av.method_step_num)
-	{
-	case 1:
-		b_av.start_pos_at_the_top ?
-			(b_av.clockwise ? move_empty_right(window) : move_empty_left(window)) :
-			(b_av.clockwise ? move_empty_left(window) : move_empty_right(window));
-		break;
-	case 2:
-		b_av.start_pos_at_the_top ? move_empty_down(window) : move_empty_up(window);
-		break;
-	case 3:
-	case 4:
-		b_av.start_pos_at_the_top ?
-			(b_av.clockwise ? move_empty_left(window) : move_empty_right(window)) :
-			(b_av.clockwise ? move_empty_right(window) : move_empty_left(window));
-		;
-		break;
-	case 5:
-		b_av.start_pos_at_the_top ? move_empty_up(window) : move_empty_down(window);
-		break;
-	case 6:
-		b_av.start_pos_at_the_top ?
-			(b_av.clockwise ? move_empty_right(window) : move_empty_left(window)) :
-			(b_av.clockwise ? move_empty_left(window) : move_empty_right(window));
-		break;
-	default:
-		break;
-	}
-
-	if (b_av.method_step_num == 6)
-	{
-		b_av.method_step_num = 0;
-		b_moving_method = MOVING_METHOD::NONE;
-	}
-	else {
-		++b_av.method_step_num;
-		b_moving_method = MOVING_METHOD::MIDDLE_CIRCLE;
-	}
-}
-
-void Bot::little_circle_movement(sf::RenderWindow& window) {
-
-
-	if (b_av.clockwise) {
-		if (b_av.method_step_num == 1) {
-			b_av.little_circle_quadrant == 4 ? b_av.little_circle_quadrant = 1 : ++b_av.little_circle_quadrant;
-		}
-		else {
-			b_av.little_circle_quadrant == 1 ? b_av.little_circle_quadrant = 4 : --b_av.little_circle_quadrant;
-		}
-	}
-
-	switch (b_av.little_circle_quadrant)
-	{
-	case 1:
-		move_empty_right(window);
-		break;
-	case 2:
-		move_empty_up(window);
-		break;
-	case 3:
-		move_empty_left(window);
-		break;
-	case 4:
-		move_empty_down(window);
-		break;
-	default:
-		break;
-	}
-
-	++b_av.method_step_num;
-	if (b_av.method_step_num > 4) {
-		b_moving_method = MOVING_METHOD::NONE;
-		b_av.method_step_num = 0;
-	}
-	else {
-		b_moving_method = MOVING_METHOD::LITTLE_CIRCLE;
-		if (!b_av.clockwise) {
-			b_av.little_circle_quadrant == 4 ? b_av.little_circle_quadrant = 1 : ++b_av.little_circle_quadrant;
-		}
-	}
-}
-
-//Поиск кубика и возврат в caller при нахождени, без каких-либо проверок (в отличии от search_cubes_and_pos). !Функция оптимизирована только под последние две строки!
-void Bot::search_certain_cube_and_pos() {
-
-	cp_home_pos.i = (b_req_cube_value - 1) / b_side_size;
-	cp_home_pos.j = b_req_cube_value - (cp_home_pos.i * b_side_size) - 1;
-
-	if (b_board(cp_req_cube_pos.i, cp_req_cube_pos.j) != b_req_cube_value) {
-		for (int i = b_side_size - 2; i < b_side_size; i++) {
-			for (int j = 0; j < b_side_size; j++) {
-				if (b_board(i, j) == b_req_cube_value) {
-					cp_req_cube_pos = { i,j };
-					return;
-				}
-			}
-		}
-	}
-}
-
-/*void Bot::assemble_row_exept_last_cube(sf::RenderWindow& window) {
-
-	if (cp_req_cube_pos == cp_home_pos) {
-		b_stage = STAGE::NONE;
-		return;
-	}
-
-	if (cp_empty_pos.i <= cp_home_pos.i) {
-		if (cp_empty_pos.j < cp_req_cube_pos.j) {
-			b_moving_method = MOVING_METHOD::REQ_LEFT_TO_POS;
-			move_req_left_to_pos(window);
-		}
-		else {
-			move_empty_down(window);
-		}
-		return;
-	}
-	else {
-		if (cp_req_cube_pos.j < cp_home_pos.j) {
-			b_moving_method = MOVING_METHOD::REQ_RIGHT_TO_POS;
-			move_req_right_to_pos(window);
-
-		}
-		else if (cp_req_cube_pos.j > cp_home_pos.j) {
-			if (cp_req_cube_pos.i == cp_home_pos.i && (cp_req_cube_pos.j - cp_empty_pos.j) > 1) {
-				move_empty_right(window);
-			}
-			else {
-				b_moving_method = MOVING_METHOD::REQ_LEFT_TO_POS;
-				move_req_left_to_pos(window);
-			}
-		}
-		else {
-			if (cp_empty_pos.j < cp_req_cube_pos.j && cp_req_cube_pos.i - cp_home_pos.i < 2) {
-				b_moving_method = MOVING_METHOD::EMPTY_UNDER_REQ;
-				placed_empty_under_req(window);
-			}
-			else {
-				b_moving_method = MOVING_METHOD::REQ_UP_TO_POS;
-				move_req_up_to_pos(window);
-			}
-		}
-		return;
-	}
-}*/
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Bot::assemble_row_exept_last_cube(sf::RenderWindow& window) {
-
-	switch (b_av.stage_step) {
-	case 1: // Определяем положение пустой клетки и, если нужный кубик не в том же ряду справа - спускаемся вниз, чтобы не сломать собранную часть
-		++b_av.stage_step;
-		if (cp_empty_pos.i <= cp_home_pos.i) {
-			if (cp_empty_pos.j < cp_req_cube_pos.j) {
-				b_moving_method = MOVING_METHOD::REQ_LEFT_TO_POS;
-				move_req_left_to_pos(window);
-			}
-			else {
-				move_empty_down(window);
-			}
-			return;
-		}
-	case 2: // Определяем, где искомый кубик
-		if (cp_req_cube_pos.j < cp_home_pos.j) {
-			b_av.stage_step = 3;
-		}
-		else if (cp_req_cube_pos.j > cp_home_pos.j) {
-			b_av.stage_step = 4;
-		}
-		else b_av.stage_step = 5;
-	case 3: // Если левее - двигаем вправо.
-		b_av.stage_step = 5;
-		b_moving_method = MOVING_METHOD::REQ_RIGHT_TO_POS;
-		move_req_right_to_pos(window);
-		return;
-	case 4: // Если правее - двигаем влево. Предварительно проверяем положение пустой клетки, чтобы не нарушить уже собранный ряд
-		if (cp_req_cube_pos.i == cp_home_pos.i && (cp_req_cube_pos.j - cp_empty_pos.j) > 1) {
-			move_empty_right(window);
-			return;
-		}
-		else {
-			b_moving_method = MOVING_METHOD::REQ_LEFT_TO_POS;
-			move_req_left_to_pos(window);
-			b_av.stage_step = 5;
-			return;
-		}
-	case 5: // Если в одном столбце - двигаем вверх (опять же с проверкой)
-		if (cp_empty_pos.j < cp_req_cube_pos.j && cp_req_cube_pos.i - cp_home_pos.i < 2) {
-			b_moving_method = MOVING_METHOD::EMPTY_UNDER_REQ;
-			placed_empty_under_req(window);
-			return;
-		}
-		else {
-			b_moving_method = MOVING_METHOD::REQ_UP_TO_POS;
-			move_req_up_to_pos(window);
-			++b_av.stage_step;
-		}
-	default: //
-		b_stage = STAGE::NONE;
-		return;
-	}
-}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Bot::assemble_last_two_rows(sf::RenderWindow& window) {
 	while (true) {
@@ -798,6 +674,88 @@ void Bot::assemble_last_two_rows(sf::RenderWindow& window) {
 	}
 }
 
+void Bot::middle_circle_movement(sf::RenderWindow& window) {
+	switch (b_av.method_step_num)
+	{
+	case 1:
+		b_av.start_pos_at_the_top ?
+			(b_av.clockwise ? move_empty_right(window) : move_empty_left(window)) :
+			(b_av.clockwise ? move_empty_left(window) : move_empty_right(window));
+		break;
+	case 2:
+		b_av.start_pos_at_the_top ? move_empty_down(window) : move_empty_up(window);
+		break;
+	case 3:
+	case 4:
+		b_av.start_pos_at_the_top ?
+			(b_av.clockwise ? move_empty_left(window) : move_empty_right(window)) :
+			(b_av.clockwise ? move_empty_right(window) : move_empty_left(window));
+		;
+		break;
+	case 5:
+		b_av.start_pos_at_the_top ? move_empty_up(window) : move_empty_down(window);
+		break;
+	case 6:
+		b_av.start_pos_at_the_top ?
+			(b_av.clockwise ? move_empty_right(window) : move_empty_left(window)) :
+			(b_av.clockwise ? move_empty_left(window) : move_empty_right(window));
+		break;
+	default:
+		break;
+	}
+
+	if (b_av.method_step_num == 6)
+	{
+		b_av.method_step_num = 0;
+		b_moving_method = MOVING_METHOD::NONE;
+	}
+	else {
+		++b_av.method_step_num;
+		b_moving_method = MOVING_METHOD::MIDDLE_CIRCLE;
+	}
+}
+void Bot::little_circle_movement(sf::RenderWindow& window) {
+
+
+	if (b_av.clockwise) {
+		if (b_av.method_step_num == 1) {
+			b_av.little_circle_quadrant == 4 ? b_av.little_circle_quadrant = 1 : ++b_av.little_circle_quadrant;
+		}
+		else {
+			b_av.little_circle_quadrant == 1 ? b_av.little_circle_quadrant = 4 : --b_av.little_circle_quadrant;
+		}
+	}
+
+	switch (b_av.little_circle_quadrant)
+	{
+	case 1:
+		move_empty_right(window);
+		break;
+	case 2:
+		move_empty_up(window);
+		break;
+	case 3:
+		move_empty_left(window);
+		break;
+	case 4:
+		move_empty_down(window);
+		break;
+	default:
+		break;
+	}
+
+	++b_av.method_step_num;
+	if (b_av.method_step_num > 4) {
+		b_moving_method = MOVING_METHOD::NONE;
+		b_av.method_step_num = 0;
+	}
+	else {
+		b_moving_method = MOVING_METHOD::LITTLE_CIRCLE;
+		if (!b_av.clockwise) {
+			b_av.little_circle_quadrant == 4 ? b_av.little_circle_quadrant = 1 : ++b_av.little_circle_quadrant;
+		}
+	}
+}
 
 bool Bot::move_cube_to_given_pos(sf::RenderWindow& window, Cube_position& given_pos) {
 	cp_home_pos = given_pos;
@@ -815,3 +773,7 @@ bool Bot::move_cube_to_given_pos(sf::RenderWindow& window, Cube_position& given_
 	}
 	return true;
 }
+
+
+
+

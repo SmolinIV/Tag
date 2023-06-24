@@ -145,7 +145,7 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 					main_menu.move_down();
 					break;
 				case sf::Keyboard::Enter:
-					menu_point_number = main_menu.selected();
+					menu_point_number = main_menu.get_selected();
 				}
 			case sf::Event::MouseMoved:
 				moving_pos = sf::Mouse::getPosition(window);
@@ -175,6 +175,7 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 		}
 	}
 }
+
 // ѕеремешивание колоды с анимацией процесса (дл€ того, чтобы игрок видел, что последовательность не нарушалась, сборка возможна в любом случае)
 PROCESS_STEPS shuffle_board(sf::RenderWindow& window, sf::RectangleShape& background, Board& player_board, std::error_code& syst_error) {
 
@@ -341,7 +342,7 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 
 		init_text(result, window.getSize().x / 2, window.getSize().y / 7, res_message, 80, sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 		if (game_res != GAME_RESULT::PLAYER_GAVE_UP) {
-			init_text(time_res, window.getSize().x / 2, window.getSize().y / 4, L"«атраченное врем€: " + (sf::String)player.get_strtime_res(), 40,
+			init_text(time_res, window.getSize().x / 2, window.getSize().y / 4, L"¬ы справились за: " + (sf::String)player.get_strtime_res(), 40,
 				sf::Color(RGB_APRICOT), 3, sf::Color(RGB_DARK_BROWN));
 		}
 
@@ -368,7 +369,7 @@ PROCESS_STEPS postgame_menu(sf::RenderWindow& window, sf::RectangleShape& backgr
 						main_menu.move_down();
 						break;
 					case sf::Keyboard::Enter:
-						menu_point_number = main_menu.selected();
+						menu_point_number = main_menu.get_selected();
 					}
 				case sf::Event::MouseMoved:
 					moving_pos = sf::Mouse::getPosition(window);
@@ -566,8 +567,4 @@ void init_text(sf::Text& mtext, float xpos, float ypos, sf::String str, int size
 
 
 
-//ѕримечани€: конструкторы копировани€ не используютс€, т.к. достаточно тех, что будут созданы по умолчанию, т.к. нет динамического выделени€ пам€ти
-// 
-// «амечани€.
-// 9. assemble_row_exept_last_cube переделать под "шаговый" алгоритм
-//
+//ѕримечани€: конструкторы копировани€ не используютс€, т.к. достаточно тех, что будут созданы по умолчанию, т.к. нет €вного динамического выделени€ пам€ти
