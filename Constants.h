@@ -12,7 +12,7 @@
 const float koef_smoothness_shuffle = 50.0f,
 koef_smoothness_board = 5.0f,
 koef_smoothness_player = 20.0f,
-koef_smoothness_bot = 10.0f;
+koef_smoothness_bot = 6.25f;
 
 // Направление движения кубиков
 enum class DIRECTION {
