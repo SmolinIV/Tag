@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.8)
 
-
 set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(PROJECT_NAME "TAG")
+set(CMAKE_TOOLCHAIN_FILE "C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake")
+set(PROJECT_NAME "Tag")
+set(SUBSYSTEM_LINKER_OPTIONS "-mwindows")
 
 project(${PROJECT_NAME})
 
-set(CMAKE_PREFIX_PATH "C:/VCPKG/installed/x64-windows/include")
+#set (SFML_DIR "C:\\vcpkg\\installed\\x64-windows\\share\\sfml")
+find_package(SFML 2.5.1 REQUIRED graphics network audio window system)
 
 add_executable( ${PROJECT_NAME} TAG.cpp
 Player.cpp
@@ -19,38 +19,39 @@ game_time.cpp
 Menu.cpp
 Tablet.cpp)
 
-find_package(SFML 2.5.1 COMPONENTS network audio graphics window system)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-audio sfml-network sfml-window sfml-system)
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${SFML_INCLUDE_DIRS})
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/png 
-  ${CMAKE_SOURCE_DIR}/font
+set_target_properties(${PROJECT_NAME}
+PROPERTIES CXX_STANDARD 17
+CXX_STANDARD_REQUIRED ON
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE 
-  ${SFML_INCLUDE_DIRS} 
-  include
+
+#include_directories( C:\\vcpkg\\installed\\x64-windows\\include)
+FILE(
+    COPY "${CMAKE_CURRENT_SOURCE_DIR}/png" "${CMAKE_CURRENT_SOURCE_DIR}/font"
+    DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_link_libraries(${PROJECT_NAME}  PRIVATE ${SFML_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}
+ PRIVATE 
+ sfml-graphics
+ sfml-audio
+ sfml-network
+ sfml-window
+ sfml-system)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-
-message(STATUS ${PROJECT_SOURCE_DIR})
+#set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake_modules")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
 CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-target_compile_options(TAG PRIVATE
+target_compile_options(${PROJECT_NAME} PRIVATE
 -g
 -Wall
 -Werror
 -pedantic
+-mwindows
 )
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-target_compile_options(TAG PRIVATE
+target_compile_options(${PROJECT_NAME} PRIVATE
 /EHsc
 /W4
 )
