@@ -25,5 +25,4 @@ public:
 	// Сменить цвет текста таблички
 	void change_color(sf::Color color);
 
-
 };

@@ -29,4 +29,5 @@ public:
 	Board& board() { return p_board; }
 	// —бросить результаты игрока
 	void reset_results();
+
 };

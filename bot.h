@@ -115,4 +115,5 @@ public:
 	void reset_results();
 	// Запусть алгоритм сборки головоломки
 	void assemble_board(sf::RenderWindow& window);
+
 };

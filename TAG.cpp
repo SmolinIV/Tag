@@ -170,7 +170,7 @@ PROCESS_STEPS main_menu(sf::RenderWindow& window, sf::RectangleShape& background
 		window.display();
 		switch (menu_point_number) {
 		case 0: return PROCESS_STEPS::SINGLE_PLAYER;
-		case 1: return PROCESS_STEPS::PLAYER_WITH_BOT; 
+		case 1: return PROCESS_STEPS::PLAYER_WITH_BOT;
 		case 2: return PROCESS_STEPS::EXIT;
 		default:
 			break;
